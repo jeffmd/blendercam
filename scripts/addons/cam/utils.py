@@ -62,6 +62,20 @@ from shapely import geometry as sgeometry
 from shapely import affinity, prepared
 #from shapely.geometry import * not possible until Polygon libs gets out finally..
 SHAPELY=True
+progressCount = 0
+
+def progressUpdate():
+	global progressCount
+	progressCount += 1
+	bpy.context.window_manager.progress_update(progressCount)
+	
+def progressBegin():
+	global progressCount
+	progressCount = 0
+	bpy.context.window_manager.progress_begin(0, 9999)
+	
+def progressEnd():
+	bpy.context.window_manager.progress_end()
 	
 def positionObject(operation):
 	ob=bpy.data.objects[operation.object_name]
@@ -397,6 +411,7 @@ def sampleChunks(o,pathSamples,layers):
 		
 		#for t in range(0,threads):
 			
+		progressUpdate()
 		for s in patternchunk.points:
 			if o.strategy!='WATERLINE' and int(100*n/totlen)!=last_percent:
 				last_percent=int(100*n/totlen)
@@ -944,7 +959,7 @@ def chunksToMesh(chunks,o):
 	for chi in range(0,len(chunks)):
 		
 		#print(chi)
-		
+		progressUpdate()
 		ch=chunks[chi]
 		#print(chunks)
 		#print (ch)
@@ -1242,6 +1257,7 @@ def exportGcodePath(filename,vertslist,operations):
 		plungelimit=(pi/2-o.plunge_angle)
 		
 		scale_graph=0.05 #warning this has to be same as in export in utils!!!!
+		progressUpdate()
 		
 		#print('2')
 		for vi,vert in enumerate(verts):
@@ -1543,6 +1559,7 @@ def sortChunks(chunks,o):
 	#print('numofchunks')
 	#print(len(chunks))
 	while len(chunks)>0:
+		progressUpdate()
 		ch=None
 		if len(sortedchunks)==0 or len(lastch.parents)==0:#first chunk or when there are no parents -> parents come after children here...
 			ch = getClosest(o,pos,chunks)
@@ -2847,7 +2864,7 @@ def getPath3axis(context, operation):
 	s=bpy.context.scene
 	o=operation
 	getBounds(o)
-	
+	progressUpdate()
 	
 	if o.strategy=='CUTOUT':
 		strategy_cutout( o )
@@ -3342,7 +3359,8 @@ def getPath(context,operation):#should do all path calculations.
 	checkMemoryLimit(operation)
 	
 	
-
+	progressBegin()
+	progressUpdate()
 	if operation.machine_axes=='3':
 		getPath3axis(context,operation)
 	
@@ -3356,6 +3374,7 @@ def getPath(context,operation):#should do all path calculations.
 	elif operation.machine_axes=='4':
 		getPath4axis(context,operation)
 	
+	progressUpdate()
 	
 	#export gcode if automatic.
 	if operation.auto_export:
@@ -3363,6 +3382,8 @@ def getPath(context,operation):#should do all path calculations.
 			return;
 		p=bpy.data.objects[operation.path_object_name]
 		exportGcodePath(operation.filename,[p.data],[operation])
+
+	progressEnd()
 
 	operation.changed=False
 	t1=time.clock()-t 
