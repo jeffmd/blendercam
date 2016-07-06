@@ -344,6 +344,9 @@ def getStrategyList(scene, context):
 			('PROJECTED_CURVE','Projected curve - EXPERIMENTAL', 'project 1 curve towards other curve')])
 	return items
 	
+def getMaxCutdepth(self):
+	return self.max_cutdepthValue
+		
 class camOperation(bpy.types.PropertyGroup):
 	
 	name = bpy.props.StringProperty(name="Operation Name", default="Operation", update = updateRest)
@@ -556,6 +559,9 @@ class camOperation(bpy.types.PropertyGroup):
 	medial_axis_subdivision=bpy.props.FloatProperty(name="Fine subdivision", default=0.0002, min=0.00000001, max=100,precision=PRECISION,  unit="LENGTH", update = updateRest)
 	#calculations
 	duration = bpy.props.FloatProperty(name="Estimated time", default=0.01, min=0.0000, max=3200000000,precision=PRECISION, unit="TIME")
+	max_cutdepth = bpy.props.FloatProperty(name="maximum depth of cut", default=0.01, min=-100.0000, max=100,precision=PRECISION, unit="LENGTH", get=getMaxCutdepth)
+	max_cutdepthValue = bpy.props.FloatProperty(name="maximum depth of cut value", default=0.01, min=-100.0000, max=100,precision=PRECISION, unit="LENGTH")
+
 	#chip_rate
 	#bridges
 	use_bridges =  bpy.props.BoolProperty(name="Use bridges",description="use bridges in cutout", default=False, update = updateBridges)

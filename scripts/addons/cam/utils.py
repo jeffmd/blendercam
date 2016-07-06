@@ -1248,9 +1248,9 @@ def exportGcodePath(filename,vertslist,operations):
 		else:		
 			if i<1:
 				last=Vector((0.0,0.0,free_movement_height))#nonsense values so first step of the operation gets written for sure
-		lastrot=Euler((0,0,0))
-		duration=0.0
-		f=0.1123456#nonsense value, so first feedrate always gets written 
+		lastrot = Euler((0,0,0))
+		duration = 0.0
+		f = 0.1123456#nonsense value, so first feedrate always gets written 
 		fadjustval = 1 # if simulation load data is Not present
 		
 		downvector= Vector((0,0,-1))
@@ -1259,6 +1259,7 @@ def exportGcodePath(filename,vertslist,operations):
 		scale_graph=0.05 #warning this has to be same as in export in utils!!!!
 		progressUpdate()
 		
+		minimumz = free_movement_height
 		#print('2')
 		for vi,vert in enumerate(verts):
 			# skip the first vertex if this is a chained operation
@@ -1349,7 +1350,10 @@ def exportGcodePath(filename,vertslist,operations):
 					c.feed( x=vx, y=vy, z=vz ,a = ra, b = rb)
 
 			
-			duration+=vect.length/f
+			duration += vect.length/f
+			newz = v.z * unitcorr
+			if newz < minimumz:
+				minimumz = newz
 			#print(duration)
 			last=v
 			if o.machine_axes!='3':
@@ -1387,9 +1391,8 @@ def exportGcodePath(filename,vertslist,operations):
 			for aline in lines:
 				c.write(aline + '\n')
 			
-	o.duration=duration*unitcorr
-	#print('duration')
-	#print(o.duration)
+		o.duration = duration * unitcorr
+		o.max_cutdepthValue = minimumz / unitcorr
 	
 	
 	c.program_end()

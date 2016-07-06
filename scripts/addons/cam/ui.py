@@ -154,9 +154,9 @@ class CAM_MATERIAL_Panel(CAMButtonsPanel, bpy.types.Panel):
 		layout = self.layout
 		scene=bpy.context.scene
 		
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao:
 				#print(dir(layout))
@@ -368,9 +368,9 @@ class CAM_INFO_Panel(CAMButtonsPanel, bpy.types.Panel):
 		layout = self.layout
 		scene=bpy.context.scene
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.warnings!='':
 				lines=ao.warnings.split('\n')
@@ -379,8 +379,14 @@ class CAM_INFO_Panel(CAMButtonsPanel, bpy.types.Panel):
 			if ao.valid:
 				if ao.duration>0:
 					layout.label('operation time: ' + str(int(ao.duration/60)) + \
-					 ' hour, ' + str(int(ao.duration)%60) + ' min, ' + \
-					 str(int(ao.duration*60)%60) + ' sec.')	   
+						' hour, ' + str(int(ao.duration)%60) + ' min, ' + \
+						str(int(ao.duration*60)%60) + ' sec.')
+						
+					layout.prop(ao, 'max_cutdepth')
+					if ao.max_cutdepth < ao.maxz:
+						cutterload = int((ao.maxz - ao.max_cutdepth) / ao.cutter_length * 100.0)
+						layout.label(text = str(cutterload) + '% cutter length' , icon='COLOR_RED' if (cutterload>100) else 'COLOR_GREEN' )
+
 				layout.label(  'chipload: '+ strInUnits(ao.chipload,4) + ' / tooth')
 				
 		
@@ -400,9 +406,9 @@ class CAM_OPERATION_PROPERTIES_Panel(CAMButtonsPanel, bpy.types.Panel):
 		use_experimental=bpy.context.user_preferences.addons['cam'].preferences.experimental
 			
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.valid:
 				if use_experimental:
@@ -538,9 +544,9 @@ class CAM_MOVEMENT_Panel(CAMButtonsPanel, bpy.types.Panel):
 		use_experimental = bpy.context.user_preferences.addons['cam'].preferences.experimental
 		
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.valid:
 				layout.prop(ao,'movement_type')
@@ -594,9 +600,9 @@ class CAM_FEEDRATE_Panel(CAMButtonsPanel, bpy.types.Panel):
 		layout = self.layout
 		scene=bpy.context.scene
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.valid:
 				layout.prop(ao,'feedrate')
@@ -620,9 +626,9 @@ class CAM_OPTIMISATION_Panel(CAMButtonsPanel, bpy.types.Panel):
 		
 			
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.valid: 
 				layout.prop(ao,'optimize')
@@ -663,9 +669,9 @@ class CAM_AREA_Panel(CAMButtonsPanel, bpy.types.Panel):
 		layout = self.layout
 		scene=bpy.context.scene
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			ao=scene.cam_operations[scene.cam_active_operation]
 			if ao.valid:
 				#o=bpy.data.objects[ao.object_name]
@@ -720,9 +726,9 @@ class CAM_GCODE_Panel(CAMButtonsPanel, bpy.types.Panel):
 		layout = self.layout
 		scene=bpy.context.scene
 		row = layout.row() 
-		if len(scene.cam_operations)==0:
+		if len(scene.cam_operations) < 1:
 			layout.label('Add operation first')
-		if len(scene.cam_operations)>0:
+		else:
 			use_experimental = bpy.context.user_preferences.addons['cam'].preferences.experimental
 			if use_experimental:
 				ao=scene.cam_operations[scene.cam_active_operation]
