@@ -77,7 +77,7 @@ class CAM_CUTTER_Panel(CAMButtonsPanel, bpy.types.Panel):
 					layout.prop_search(ao, "cutter_object_name", bpy.data, "objects")
 				
 				layout.prop(ao,'cutter_diameter')
-				#layout.prop(ao,'cutter_length')
+				layout.prop(ao,'cutter_length')
 				layout.prop(ao,'cutter_flutes')
 				layout.prop(ao, 'cutter_description')
 
