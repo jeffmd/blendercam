@@ -309,6 +309,18 @@ def updateRest(o,context):
 		#o.parallel_step_back = False
 	o.changed=True
 
+def updateStepover(o, context):
+	o.dist_between_paths = o.stepover_perc / 100.0 * o.cutter_diameter
+	o.changed = True
+
+def updateToolpathDist(o, context):
+	o.stepover_perc = o.dist_between_paths / o.cutter_diameter * 100.0
+	o.changed = True
+
+def updateCutter(o, context):
+	updateStepover(o, context)
+	updateOffsetImage(o, context)
+		
 def getStrategyList(scene, context):
 	use_experimental=bpy.context.user_preferences.addons['cam'].preferences.experimental
 	items =[
@@ -429,14 +441,15 @@ class camOperation(bpy.types.PropertyGroup):
 	
 	#cutter
 	cutter_id = IntProperty(name="Tool number", description="For machines which support tool change based on tool id", min=0, max=10000, default=1, update = updateRest)
-	cutter_diameter = FloatProperty(name="Cutter diameter", description="Cutter diameter = 2x cutter radius", min=0.000001, max=10, default=0.003, precision=PRECISION, unit="LENGTH", update = updateOffsetImage)
+	cutter_diameter = FloatProperty(name="Cutter diameter", description="Cutter diameter = 2x cutter radius", min=0.000001, max=10, default=0.003, precision=PRECISION, unit="LENGTH", update = updateCutter)
 	cutter_length = FloatProperty(name="#Cutter length", description="#not supported#Cutter length", min=0.0, max=100.0, default=25.0,precision=PRECISION, unit="LENGTH",  update = updateOffsetImage)
 	cutter_flutes = IntProperty(name="Cutter flutes", description="Cutter flutes", min=1, max=20, default=2, update = updateChipload)
 	cutter_tip_angle = FloatProperty(name="Cutter v-carve angle", description="Cutter v-carve angle", min=0.0, max=180.0, default=60.0,precision=PRECISION,	 update = updateOffsetImage)
 	cutter_description = StringProperty(name="Tool Description", default="", update = updateOffsetImage)
 	
 	#steps
-	dist_between_paths = bpy.props.FloatProperty(name="Distance between toolpaths", default=0.001, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
+	dist_between_paths = bpy.props.FloatProperty(name="Distance between toolpaths", description="step over distance between tool paths", default=0.001, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateToolpathDist)
+	stepover_perc = bpy.props.FloatProperty(name="% of tool diameter", description="step over distance expressed as percentage of tool diameter", default=40.0, min=0.00, max=100 ,precision=1, subtype='PERCENTAGE', update = updateStepover)
 	dist_along_paths = bpy.props.FloatProperty(name="Distance along toolpaths", default=0.0002, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
 	parallel_angle = bpy.props.FloatProperty(name="Angle of paths", default=0, min=-360, max=360 , precision=0, subtype="ANGLE" , unit="ROTATION" , update = updateRest)
 	
