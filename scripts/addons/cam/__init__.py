@@ -56,8 +56,6 @@ bl_info = {
 PRECISION=5
 
 
-was_hidden_dict = {}
-
 def updateMachine(self,context):
 	print('update machine ')
 	utils.addMachineAreaObject()
@@ -65,41 +63,63 @@ def updateMachine(self,context):
 def updateMaterial(self,context):
 	print('update material')
 	utils.addMaterialAreaObject()
+
+def updateHideOtherPaths(self, context):
+	scene = context.scene
+	uiset = scene.cam_ui_settings
+	for _ao in scene.cam_operations:
+		if _ao.path_object_name in bpy.data.objects:
+			path_obj = bpy.data.objects[_ao.path_object_name]
+			if uiset.hide_other_toolpaths == True:
+				_ao.path_hidden = path_obj.hide
+			else:
+				path_obj.hide = False
+			
+	updateOperation(self, context)
 	
 def updateOperation(self, context):
 	scene = context.scene
+	uiset = scene.cam_ui_settings
 	ao = scene.cam_operations[scene.cam_active_operation]
 
-	if ao.hide_all_others == True:
-		for _ao in scene.cam_operations:
-			if _ao.path_object_name in bpy.data.objects:
-				other_obj = bpy.data.objects[_ao.path_object_name]
-				current_obj = bpy.data.objects[ao.path_object_name]
-				if other_obj != current_obj:
-					other_obj.hide = True
-					other_obj.select = False
+	bpy.ops.object.select_all(action='DESELECT')
+
+	if ao.path_object_name in bpy.data.objects:
+		path_obj = bpy.data.objects[ao.path_object_name]
 	else:
-		for path_obj_name in was_hidden_dict:
-			print(was_hidden_dict)
-			if was_hidden_dict[path_obj_name] == True:
-				# Find object and make it hidde, then reset 'hidden' flag
-				obj = bpy.data.objects[path_obj_name]
-				obj.hide = True
-				obj.select = False
-				was_hidden_dict[path_obj_name] = False
+		path_obj = None
+		
+	for _ao in scene.cam_operations:
+		if _ao.path_object_name in bpy.data.objects:
+			other_obj = bpy.data.objects[_ao.path_object_name]
+			if other_obj != path_obj:
+				if uiset.hide_other_toolpaths == True:
+					other_obj.hide = True
+				else:
+					if _ao.path_hidden == True:
+						other_obj.hide = True
+						_ao.path_hidden = False
+				
 
 	# try highlighting the object in the 3d view and make it active
-	bpy.ops.object.select_all(action='DESELECT')
+	if uiset.select_opobject == True:
+		if ao.geometry_source=='OBJECT':
+			if ao.object_name in bpy.data.objects:
+				ob = bpy.data.objects[ao.object_name]
+				simple.activate(ob)
+		elif ao.geometry_source=='GROUP':
+			if ao.group_name in bpy.data.groups:
+				group = bpy.data.groups[ao.group_name]
+				for obj in group.objects:
+					obj.select = True
+
 	# highlight the cutting path if it exists
-	try:
-		ob = bpy.data.objects[ao.path_object_name]
-		ob.select = True
-		# Show object if, it's was hidden
-		if ob.hide == True:
-			ob.hide = False
-			was_hidden_dict[ao.path_object_name] = True
-	except:
-		pass
+	if path_obj is not None:
+		path_obj.select = True
+		# Show object if it was hidden
+		if uiset.hide_other_toolpaths == False:
+			ao.path_hidden = path_obj.hide
+		path_obj.hide = False
 		
 	
 	
@@ -187,6 +207,22 @@ class machineSettings(bpy.types.PropertyGroup):
 	output_tool_change =  BoolProperty(name = "output tool change commands", description = "output tool change commands ie: Tn M06", default = True)
 
 	output_g43_on_tool_change = BoolProperty(name = "output G43 on tool change", description = "output G43 on tool change line", default = False)
+
+
+class uiSettings(bpy.types.PropertyGroup):
+	'''stores ui settings'''
+
+	select_opobject = bpy.props.BoolProperty(
+		name="Select operation object",
+		description="make operation object/group active"
+			    " when CAM operation is selected",
+		default=False, update=updateOperation)
+		
+	hide_other_toolpaths = bpy.props.BoolProperty(
+		name="Hide other toolpaths",
+		description="Hide all other tool paths except toolpath"
+			    " assotiated with the selected CAM operation",
+		default=False, update=updateHideOtherPaths)
 
 
 class PackObjectsSettings(bpy.types.PropertyGroup):
@@ -363,11 +399,6 @@ class camOperation(bpy.types.PropertyGroup):
 	name = bpy.props.StringProperty(name="Operation Name", default="Operation", update = updateRest)
 	filename = bpy.props.StringProperty(name="File name", default="Operation", update = updateRest)
 	auto_export = bpy.props.BoolProperty(name="Auto export",description="export files immediately after path calculation", default=True)
-	hide_all_others = bpy.props.BoolProperty(
-		name="Hide all others",
-		description="Hide all other tool pathes except toolpath"
-			    " assotiated with selected CAM operation",
-		default=False)
 	#group = bpy.props.StringProperty(name='Object group', description='group of objects which will be included in this operation')
 	object_name = bpy.props.StringProperty(name='Object', description='object handled by this operation', update=updateOperationValid)
 	group_name = bpy.props.StringProperty(name='Group', description='Object group handled by this operation', update=updateOperationValid)
@@ -634,6 +665,7 @@ class camOperation(bpy.types.PropertyGroup):
 	borderwidth=50
 	object=None
 	path_object_name=bpy.props.StringProperty(name='Path object', description='actual cnc path')
+	path_hidden=bpy.props.BoolProperty(name="Path hidden",description="True if the path was hidden before selection", default=False)
 	#####update and tags and related
 	changed=bpy.props.BoolProperty(name="True if any of the operation settings has changed",description="mark for update", default=False)
 	update_zbufferimage_tag=bpy.props.BoolProperty(name="mark zbuffer image for update",description="mark for update", default=True)
@@ -792,6 +824,7 @@ def get_panels():#convenience function for bot register and unregister functions
 	opReference,
 	camChain,
 	machineSettings,
+	uiSettings,
 	CamAddonPreferences,
 	
 	ui.CAM_CHAINS_Panel,
@@ -806,6 +839,7 @@ def get_panels():#convenience function for bot register and unregister functions
 	ui.CAM_CUTTER_Panel,
 	ui.CAM_GCODE_Panel,
 	ui.CAM_MACHINE_Panel,
+	ui.CAM_UISETTINGS_Panel,
 	ui.CAM_PACK_Panel,
 	ui.CAM_SLICE_Panel,
 	ui.VIEW3D_PT_tools_curvetools,
@@ -990,6 +1024,7 @@ def register():
 	
 	s.cam_active_operation = bpy.props.IntProperty(name="CAM Active Operation", description="The selected operation", update=updateOperation)
 	s.cam_machine = bpy.props.PointerProperty(type=machineSettings)
+	s.cam_ui_settings = bpy.props.PointerProperty(type=uiSettings)
 	
 	s.cam_text= bpy.props.StringProperty()
 	bpy.app.handlers.scene_update_pre.append(ops.timer_update)
@@ -1010,10 +1045,10 @@ def unregister():
 	del s.cam_operations
 	#cam chains are defined hardly now.
 	del s.cam_chains
-	
-	
 	del s.cam_active_operation
 	del s.cam_machine
+	del s.cam_ui_settings
+	
 	bpy.app.handlers.scene_update_pre.remove(ops.timer_update)
 	#bpy.types.INFO_HT_header.remove(header_info)
 

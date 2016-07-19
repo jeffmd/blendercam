@@ -142,6 +142,23 @@ class CAM_MACHINE_Panel(CAMButtonsPanel, bpy.types.Panel):
 				layout.prop(ao, 'output_tool_change')
 				if ao.output_tool_change:
 					layout.prop(ao, 'output_g43_on_tool_change')
+
+class CAM_UISETTINGS_Panel(CAMButtonsPanel, bpy.types.Panel):	
+	"""CAM UI settings panel"""
+	bl_label = "CAM UI Settings"
+	bl_idname = "WORLD_PT_CAM_UISETTINGS"
+		
+	COMPAT_ENGINES = {'BLENDERCAM_RENDER'}
+
+	def draw(self, context):
+		layout = self.layout
+		scene = bpy.context.scene
+
+		uiset = scene.cam_ui_settings
+		if uiset:
+			layout.prop(uiset, 'select_opobject')
+			layout.prop(uiset, 'hide_other_toolpaths')
+			
 			
 class CAM_MATERIAL_Panel(CAMButtonsPanel, bpy.types.Panel):	 
 	"""CAM material panel"""
@@ -354,7 +371,6 @@ class CAM_OPERATIONS_Panel(CAMButtonsPanel, bpy.types.Panel):
 
 				if use_experimental and ao.geometry_source in ['OBJECT', 'GROUP']:
 					layout.prop(ao, 'use_modifiers')
-				layout.prop(ao, 'hide_all_others')
 
 									 
 class CAM_INFO_Panel(CAMButtonsPanel, bpy.types.Panel):
