@@ -609,10 +609,6 @@ class CamOperationRemove(bpy.types.Operator):
 		except:
 			pass
 
-		ao = scene.cam_operations[scene.cam_active_operation]
-		if ao.path_object_name in cam.was_hidden_dict:
-			del cam.was_hidden_dict[ao.path_object_name]
-
 		scene.cam_operations.remove(scene.cam_active_operation)
 		if scene.cam_active_operation>0:
 			scene.cam_active_operation-=1
