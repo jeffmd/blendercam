@@ -227,7 +227,7 @@ class uiSettings(bpy.types.PropertyGroup):
 
 
 class PackObjectsSettings(bpy.types.PropertyGroup):
-	'''stores all data for machines'''
+	'''stores all data for pack object settings'''
 	#name = bpy.props.StringProperty(name="Machine Name", default="Machine")
 	sheet_fill_direction = EnumProperty(name='Fill direction',
 		items=(('X','X','Fills sheet in X axis direction'),('Y','Y','Fills sheet in Y axis direction')),
@@ -239,7 +239,7 @@ class PackObjectsSettings(bpy.types.PropertyGroup):
 	rotate = bpy.props.BoolProperty(name="enable rotation",description="Enable rotation of elements", default=True)
 
 class SliceObjectsSettings(bpy.types.PropertyGroup):
-	'''stores all data for machines'''
+	'''stores all data for slice object settings'''
 	#name = bpy.props.StringProperty(name="Machine Name", default="Machine")
 	
 	slice_distance = FloatProperty(name="Slicing distance", description="slices distance in z, should be most often thickness of plywood sheet.", min=0.001, max=10, default=0.005, precision=PRECISION, unit="LENGTH")
