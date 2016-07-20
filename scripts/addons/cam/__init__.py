@@ -67,6 +67,7 @@ def updateMaterial(self,context):
 def updateHideOtherPaths(self, context):
 	scene = context.scene
 	uiset = scene.cam_ui_settings
+	
 	for _ao in scene.cam_operations:
 		if _ao.path_object_name in bpy.data.objects:
 			path_obj = bpy.data.objects[_ao.path_object_name]
@@ -100,7 +101,6 @@ def updateOperation(self, context):
 						other_obj.hide = True
 						_ao.path_hidden = False
 				
-
 	# try highlighting the object in the 3d view and make it active
 	if uiset.select_opobject == True:
 		if ao.geometry_source=='OBJECT':
@@ -118,6 +118,7 @@ def updateOperation(self, context):
 		path_obj.select = True
 		# Show object if it was hidden
 		if uiset.hide_other_toolpaths == False:
+			# keep track if path was manually hidden
 			ao.path_hidden = path_obj.hide
 		path_obj.hide = False
 		
