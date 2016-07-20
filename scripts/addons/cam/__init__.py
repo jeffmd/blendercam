@@ -67,7 +67,7 @@ def updateMaterial(self,context):
 def updateHideOtherPaths(self, context):
 	scene = context.scene
 	uiset = scene.cam_ui_settings
-	
+
 	for _ao in scene.cam_operations:
 		if _ao.path_object_name in bpy.data.objects:
 			path_obj = bpy.data.objects[_ao.path_object_name]
