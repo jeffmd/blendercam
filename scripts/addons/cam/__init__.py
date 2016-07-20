@@ -115,7 +115,11 @@ def updateOperation(self, context):
 
 	# highlight the cutting path if it exists
 	if path_obj is not None:
-		path_obj.select = True
+		if uiset.select_opobject == True:
+			path_obj.select = True
+		else:
+			# make path active since operation object is not selected
+			simple.activate(path_obj)
 		# Show object if it was hidden
 		if uiset.hide_other_toolpaths == False:
 			# keep track if path was manually hidden
