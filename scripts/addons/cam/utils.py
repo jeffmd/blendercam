@@ -2860,7 +2860,80 @@ def strategy_medial_axis( o ):
 
 	chunksToMesh(chunklayers, o )
 
+def strategy_3d_path_carve( o ):
+	print('operation: 3D path carve')	
+
+	if o.strategy=='CARVE':
+		pathSamples=[]
+		#for ob in o.objects:
+		ob=bpy.data.objects[o.curve_object]
+		pathSamples.extend(curveToChunks(ob))
+		pathSamples=sortChunks(pathSamples,o)#sort before sampling
+		pathSamples=chunksRefine(pathSamples,o)
+		
+	elif o.strategy=='PENCIL':
+		prepareArea(o)
+		getAmbient(o)
+		pathSamples=getOffsetImageCavities(o,o.offset_image)
+		#for ch in pathSamples:
+		#	for i,p in enumerate(ch.points):
+		#	 ch.points[i]=(p[0],p[1],0)
+		pathSamples=limitChunks(pathSamples,o)
+		pathSamples=sortChunks(pathSamples,o)#sort before sampling
+		
+	elif o.strategy=='CRAZY':
+		prepareArea(o)
+		
+		#pathSamples = crazyStrokeImage(o)
+		#####this kind of worked and should work:
+		millarea=o.zbuffer_image<o.minz+0.000001
+		avoidarea = o.offset_image>o.minz+0.000001
+		
+		pathSamples = crazyStrokeImageBinary(o,millarea,avoidarea)
+		#####
+		pathSamples=sortChunks(pathSamples,o)
+		pathSamples=chunksRefine(pathSamples,o)
+		
+	else: 
+		if o.strategy=='OUTLINEFILL':
+			getOperationSilhouete(o)
+		pathSamples=getPathPattern(o)
+		if o.strategy=='OUTLINEFILL':
+			pathSamples = sortChunks(pathSamples,o)#have to be sorted once before, because of the parenting inside of samplechunks
+		#chunksToMesh(pathSamples,o)#for testing pattern script
+		#return
+		if o.strategy in ['PARALLEL', 'BLOCK', 'SPIRAL', 'CIRCLES']:
+			pathSamples=connectChunksLow(pathSamples,o)
 	
+	#print (minz)
+	
+	
+	chunks=[]
+	layers = getLayers(o, o.maxz, o.min.z)		
+	
+	chunks.extend(sampleChunks(o,pathSamples,layers))
+	if (o.strategy=='PENCIL'):# and bpy.app.debug_value==-3:
+		chunks=chunksCoherency(chunks)
+		print('coherency check')
+		
+	if o.strategy in ['PARALLEL', 'CROSS', 'PENCIL', 'OUTLINEFILL']:# and not o.parallel_step_back:
+		print('sorting')
+		chunks=sortChunks(chunks,o)
+		if o.strategy == 'OUTLINEFILL':
+			chunks = connectChunksLow(chunks,o)
+	if o.ramp:
+		for ch in chunks:
+			ch.rampZigZag(ch.zstart, ch.points[0][2],o)
+	#print(chunks)
+	if o.strategy=='CARVE':
+		for ch in chunks:
+			for vi in range(0,len(ch.points)):
+				ch.points[vi]=(ch.points[vi][0],ch.points[vi][1],ch.points[vi][2]-o.carve_depth)
+	if o.use_bridges:
+		for chunk in chunks:
+			useBridges(chunk,o)
+	chunksToMesh(chunks,o)
+		
 #this is the main function.
 #FIXME: split strategies into separate file!
 def getPath3axis(context, operation):
@@ -2883,75 +2956,7 @@ def getPath3axis(context, operation):
 	
 		
 	elif o.strategy in ['PARALLEL', 'CROSS', 'BLOCK', 'SPIRAL', 'CIRCLES', 'OUTLINEFILL', 'CARVE', 'PENCIL', 'CRAZY']:
-		
-		if o.strategy=='CARVE':
-			pathSamples=[]
-			#for ob in o.objects:
-			ob=bpy.data.objects[o.curve_object]
-			pathSamples.extend(curveToChunks(ob))
-			pathSamples=sortChunks(pathSamples,o)#sort before sampling
-			pathSamples=chunksRefine(pathSamples,o)
-		elif o.strategy=='PENCIL':
-			prepareArea(o)
-			getAmbient(o)
-			pathSamples=getOffsetImageCavities(o,o.offset_image)
-			#for ch in pathSamples:
-			#	for i,p in enumerate(ch.points):
-			#	 ch.points[i]=(p[0],p[1],0)
-			pathSamples=limitChunks(pathSamples,o)
-			pathSamples=sortChunks(pathSamples,o)#sort before sampling
-		elif o.strategy=='CRAZY':
-			prepareArea(o)
-			
-			#pathSamples = crazyStrokeImage(o)
-			#####this kind of worked and should work:
-			millarea=o.zbuffer_image<o.minz+0.000001
-			avoidarea = o.offset_image>o.minz+0.000001
-			
-			pathSamples = crazyStrokeImageBinary(o,millarea,avoidarea)
-			#####
-			pathSamples=sortChunks(pathSamples,o)
-			pathSamples=chunksRefine(pathSamples,o)
-			
-		else: 
-			if o.strategy=='OUTLINEFILL':
-				getOperationSilhouete(o)
-			pathSamples=getPathPattern(o)
-			if o.strategy=='OUTLINEFILL':
-				pathSamples = sortChunks(pathSamples,o)#have to be sorted once before, because of the parenting inside of samplechunks
-			#chunksToMesh(pathSamples,o)#for testing pattern script
-			#return
-			if o.strategy in ['BLOCK', 'SPIRAL', 'CIRCLES']:
-				pathSamples=connectChunksLow(pathSamples,o)
-		
-		#print (minz)
-		
-		
-		chunks=[]
-		layers = getLayers(o, o.maxz, o.min.z)		
-		
-		chunks.extend(sampleChunks(o,pathSamples,layers))
-		if (o.strategy=='PENCIL'):# and bpy.app.debug_value==-3:
-			chunks=chunksCoherency(chunks)
-			print('coherency check')
-			
-		if o.strategy in ['PARALLEL', 'CROSS', 'PENCIL', 'OUTLINEFILL']:# and not o.parallel_step_back:
-			print('sorting')
-			chunks=sortChunks(chunks,o)
-			if o.strategy == 'OUTLINEFILL':
-				chunks = connectChunksLow(chunks,o)
-		if o.ramp:
-			for ch in chunks:
-				ch.rampZigZag(ch.zstart, ch.points[0][2],o)
-		#print(chunks)
-		if o.strategy=='CARVE':
-			for ch in chunks:
-				for vi in range(0,len(ch.points)):
-					ch.points[vi]=(ch.points[vi][0],ch.points[vi][1],ch.points[vi][2]-o.carve_depth)
-		if o.use_bridges:
-			for chunk in chunks:
-				useBridges(chunk,o)
-		chunksToMesh(chunks,o)
+		strategy_3d_path_carve( o )
 		
 		
 	elif o.strategy=='WATERLINE' and o.use_opencamlib:
