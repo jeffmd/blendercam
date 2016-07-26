@@ -542,7 +542,7 @@ def sampleChunks(o,pathSamples,layers):
 				layeractivechunks[i]=camPathChunk([])
 				
 			#PARENTING	
-			if (o.strategy=='PARALLEL' or o.strategy=='CROSS' or o.strategy == 'OUTLINEFILL'):
+			if o.strategy in [ 'PARALLEL', 'CROSS', 'OUTLINEFILL']: #
 				timingstart(sortingtime)
 				parentChildDist(thisrunchunks[i], lastrunchunks[i],o)
 				timingadd(sortingtime)
@@ -553,7 +553,7 @@ def sampleChunks(o,pathSamples,layers):
 	progress('checking relations between paths')
 	timingstart(sortingtime)
 
-	if (o.strategy=='PARALLEL' or o.strategy=='CROSS' or o.strategy == 'OUTLINEFILL'):
+	if o.strategy in ['PARALLEL', 'CROSS', 'OUTLINEFILL']: #
 		if len(layers)>1:# sorting help so that upper layers go first always
 			for i in range(0,len(layers)-1):
 				parents=[]
@@ -2303,8 +2303,6 @@ def strategy_cutout( o ):
 		chunk.setZ(layer[1])
 	
 	chunks=[]
-	
-	
 
 	if o.use_bridges:#add bridges to chunks
 		#bridges=getBridges(p,o)
@@ -2329,9 +2327,8 @@ def strategy_cutout( o ):
 	else:
 		for chl in extendorder:
 			chunks.append(chl[0])
-			
 
-	chunksToMesh(chunks,o)
+	return chunks
 
 def strategy_curve( o ):
 	print('operation: curve')
@@ -2349,7 +2346,7 @@ def strategy_curve( o ):
 		for ch in pathSamples:
 			ch.rampZigZag(ch.zstart, ch.points[0][2],o)
 			
-	chunksToMesh(pathSamples,o)
+	return pathSamples
 	
 def strategy_proj_curve( s, o ):
 	print('operation: projected curve')
@@ -2416,7 +2413,8 @@ def strategy_proj_curve( s, o ):
 	chunks.extend(sampleChunksNAxis(o,pathSamples,layers))
 	#for ch in pathSamples:
 	#	ch.points=ch.endpoints
-	chunksToMesh(chunks,o)
+	
+	return chunks
 
 def strategy_pocket( o ):
 	print('operation: pocket')
@@ -2596,7 +2594,7 @@ def strategy_pocket( o ):
 		chunks = sortChunks(chunks, o)
 
 		
-	chunksToMesh(chunks,o)
+	return chunks
 		
 def strategy_drill( o ):
 	print('operation: Drill')
@@ -2681,7 +2679,8 @@ def strategy_drill( o ):
 					
 	
 	chunklayers = sortChunks( chunklayers, o)
-	chunksToMesh( chunklayers, o)
+	
+	return chunklayers
 
 def strategy_medial_axis( o ):
 	print('operation: Medial Axis')	
@@ -2858,7 +2857,7 @@ def strategy_medial_axis( o ):
 	if o.first_down:
 		chunklayers = sortChunks(chunklayers, o)
 
-	chunksToMesh(chunklayers, o )
+	return chunklayers
 
 def strategy_3d_path_carve( o ):
 	print('operation: 3D path carve')	
@@ -2910,13 +2909,13 @@ def strategy_3d_path_carve( o ):
 	
 	chunks=[]
 	layers = getLayers(o, o.maxz, o.min.z)		
+	chunks.extend(sampleChunks(o, pathSamples, layers))
 	
-	chunks.extend(sampleChunks(o,pathSamples,layers))
 	if (o.strategy=='PENCIL'):# and bpy.app.debug_value==-3:
 		chunks=chunksCoherency(chunks)
 		print('coherency check')
 		
-	if o.strategy in ['PARALLEL', 'CROSS', 'PENCIL', 'OUTLINEFILL']:# and not o.parallel_step_back:
+	if o.strategy in ['PARALLEL', 'CROSS', 'PENCIL', 'OUTLINEFILL']:# 'PARALLEL', and not o.parallel_step_back:
 		print('sorting')
 		chunks=sortChunks(chunks,o)
 		if o.strategy == 'OUTLINEFILL':
@@ -2932,7 +2931,8 @@ def strategy_3d_path_carve( o ):
 	if o.use_bridges:
 		for chunk in chunks:
 			useBridges(chunk,o)
-	chunksToMesh(chunks,o)
+			
+	return chunks
 		
 #this is the main function.
 #FIXME: split strategies into separate file!
@@ -2941,22 +2941,23 @@ def getPath3axis(context, operation):
 	o=operation
 	getBounds(o)
 	progressUpdate()
+	chunks = []
 	
 	if o.strategy=='CUTOUT':
-		strategy_cutout( o )
+		chunks = strategy_cutout( o )
 		
 	elif o.strategy=='CURVE':
-		strategy_curve( o )
+		chunks = strategy_curve( o )
 				
 	elif o.strategy=='PROJECTED_CURVE':
-		strategy_proj_curve(s, o)
+		chunks = strategy_proj_curve(s, o)
 		
 	elif o.strategy=='POCKET':
-		strategy_pocket( o )
+		chunks = strategy_pocket( o )
 	
 		
 	elif o.strategy in ['PARALLEL', 'CROSS', 'BLOCK', 'SPIRAL', 'CIRCLES', 'OUTLINEFILL', 'CARVE', 'PENCIL', 'CRAZY']:
-		strategy_3d_path_carve( o )
+		chunks = strategy_3d_path_carve( o )
 		
 		
 	elif o.strategy=='WATERLINE' and o.use_opencamlib:
@@ -2967,7 +2968,6 @@ def getPath3axis(context, operation):
 		if (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW'):
 			for ch in chunks:
 				ch.points.reverse()
-		chunksToMesh(chunks,o)
 		
 		
 	elif o.strategy=='WATERLINE' and not o.use_opencamlib:
@@ -3169,10 +3169,13 @@ def getPath3axis(context, operation):
 		chunksToMesh(chunks,o)	
 		
 	elif o.strategy=='DRILL':
-		strategy_drill( o )
+		chunks = strategy_drill( o )
 			
 	elif o.strategy=='MEDIAL_AXIS':
-		strategy_medial_axis( o )
+		chunks = strategy_medial_axis( o )
+
+	chunksToMesh(chunks, o)
+	
 		
 	#progress('finished')
 	
