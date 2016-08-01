@@ -1067,6 +1067,9 @@ def chunksToMesh(chunks,o):
 		
 def exportGcodePath(filename,vertslist,operations):
 	'''exports gcode with the heeks nc adopted library.'''
+	import importlib
+	
+	from cam.nc import postprocessors
 	
 	progress('exporting gcode file')
 	t=time.time()
@@ -1092,43 +1095,9 @@ def exportGcodePath(filename,vertslist,operations):
 	basefilename=bpy.data.filepath[:-len(bpy.path.basename(bpy.data.filepath))]+safeFileName(filename)
 	
 	
-	extension='.tap'
-	if m.post_processor=='ISO':
-		from .nc import iso as postprocessor
-	if m.post_processor=='MACH3':
-		from .nc import mach3 as postprocessor
-	elif m.post_processor=='EMC':
-		extension = '.ngc'
-		from .nc import emc2b as postprocessor
-	elif m.post_processor=='GRBL':
-		extension = '.ngc'
-		from .nc import grbl as postprocessor
-	elif m.post_processor=='HM50':
-		from .nc import hm50 as postprocessor
-	elif m.post_processor=='HEIDENHAIN':
-		extension='.H'
-		from .nc import heiden as postprocessor
-	elif m.post_processor=='TNC151':
-		from .nc import tnc151 as postprocessor
-	elif m.post_processor=='SIEGKX1':
-		from .nc import siegkx1 as postprocessor
-	elif m.post_processor=='CENTROID':
-		from .nc import centroid1 as postprocessor
-	elif m.post_processor=='ANILAM':
-		from .nc import anilam_crusader_m as postprocessor
-	elif m.post_processor=='GRAVOS':
-		extension = '.nc'
-		from .nc import gravos as postprocessor
-	elif m.post_processor=='WIN-PC' :
-		extension='.din'
-		from .nc import winpc as postprocessor
-	elif m.post_processor=='SHOPBOT MTC':
-		extension='.sbp'
-		from .nc import shopbot_mtc as postprocessor
-	elif m.post_processor=='LYNX_OTTER_O':
-		extension='.nc'
-		from .nc import lynx_otter_o as postprocessor
-	
+	pname, extension = postprocessors[m.post_processor]
+	postprocessor = importlib.import_module('cam.nc.' + pname)
+
 	if s.unit_settings.system=='METRIC':
 		unitcorr=1000.0
 	elif s.unit_settings.system=='IMPERIAL':
