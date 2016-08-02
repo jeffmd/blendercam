@@ -27,6 +27,7 @@ from bpy_extras.object_utils import object_data_add
 from bpy.props import *
 import bl_operators
 from bpy.types import Menu, Operator, UIList, AddonPreferences
+from cam.nc import getPostProcessorMenuItems
 
 
 #from . import patterns
@@ -150,20 +151,7 @@ class machineSettings(bpy.types.PropertyGroup):
 	'''stores all data for machines'''
 	#name = bpy.props.StringProperty(name="Machine Name", default="Machine")
 	post_processor = EnumProperty(name='Post processor',
-		items=(('ISO', 'Iso', 'exports standardized gcode ISO 6983 (RS-274)'),
-			('MACH3', 'Mach3', 'default mach3'),
-			('EMC', 'LinuxCNC - EMC2', 'Linux based CNC control software - formally EMC2'),
-			('GRBL', 'grbl', 'optimized gcode for grbl firmware on Arduino with cnc shield'),
-			('HEIDENHAIN', 'Heidenhain', 'heidenhain'),
-			('TNC151', 'Heidenhain TNC151', 'Post Processor for the Heidenhain TNC151 machine'),
-			('SIEGKX1', 'Sieg KX1', 'Sieg KX1'),
-			('HM50', 'Hafco HM-50', 'Hafco HM-50'),
-			('CENTROID', 'Centroid M40', 'Centroid M40'),
-			('ANILAM', 'Anilam Crusader M', 'Anilam Crusader M'),
-			('GRAVOS', 'Gravos', 'Gravos'),
-			('WIN-PC', 'WinPC-NC', 'German CNC by Burkhard Lewetz'),
-			('SHOPBOT MTC', 'ShopBot MTC', 'ShopBot MTC'),
-			('LYNX_OTTER_O', 'Lynx Otter o', 'Lynx Otter o')),
+		items=getPostProcessorMenuItems(),
 		description='Post processor',
 		default='MACH3')
 	#units = EnumProperty(name='Units', items = (('IMPERIAL', ''))
@@ -234,7 +222,8 @@ class PackObjectsSettings(bpy.types.PropertyGroup):
 	'''stores all data for pack object settings'''
 	#name = bpy.props.StringProperty(name="Machine Name", default="Machine")
 	sheet_fill_direction = EnumProperty(name='Fill direction',
-		items=(('X','X','Fills sheet in X axis direction'),('Y','Y','Fills sheet in Y axis direction')),
+		items=[('X','X','Fills sheet in X axis direction'),
+				('Y','Y','Fills sheet in Y axis direction')],
 		description='Fill direction of the packer algorithm',
 		default='Y')
 	sheet_x = FloatProperty(name="X size", description="Sheet size", min=0.001, max=10, default=0.5, precision=PRECISION, unit="LENGTH")
@@ -388,12 +377,15 @@ def getStrategyList(scene, context):
 			('CARVE','Carve', 'Pocket operation')
 			]
 	if use_experimental:
-		items.extend([('WATERLINE','Waterline - EXPERIMENTAL', 'Waterline paths - constant z'),
+		items.extend(
+			[('WATERLINE','Waterline - EXPERIMENTAL', 'Waterline paths - constant z'),
 			('CURVE','Curve to Path - EXPERIMENTAL', 'Curve object gets converted directly to path'),
 			('PENCIL','Pencil - EXPERIMENTAL', 'Pencil operation - detects negative corners in the model and mills only those.'),
 			('CRAZY','Crazy path - EXPERIMENTAL', 'Crazy paths - dont even think about using this!'),
 			('MEDIAL_AXIS','Medial axis - EXPERIMENTAL', 'Medial axis, must be used with V or ball cutter, for engraving various width shapes with a single stroke '),
-			('PROJECTED_CURVE','Projected curve - EXPERIMENTAL', 'project 1 curve towards other curve')])
+			('PROJECTED_CURVE','Projected curve - EXPERIMENTAL', 'project 1 curve towards other curve'),
+			('F_ENGRAVE', 'F-Engrave - EXPERIMENTAL', 'engrave or v-carve operation using f-engrave')
+			])
 	return items
 	
 def getMaxCutdepth(self):

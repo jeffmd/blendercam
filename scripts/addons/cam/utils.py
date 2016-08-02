@@ -1095,7 +1095,7 @@ def exportGcodePath(filename,vertslist,operations):
 	basefilename=bpy.data.filepath[:-len(bpy.path.basename(bpy.data.filepath))]+safeFileName(filename)
 	
 	
-	pname, extension = postprocessors[m.post_processor]
+	pname, extension = postprocessors[m.post_processor][0:2]
 	postprocessor = importlib.import_module('cam.nc.' + pname)
 
 	if s.unit_settings.system=='METRIC':
