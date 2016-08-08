@@ -276,9 +276,8 @@ class CAM_CHAINS_Panel(CAMButtonsPanel, bpy.types.Panel):
 
 				if not chain.computing:
 					if chain.valid:
-						pass
-						layout.operator("object.calculate_cam_paths_chain", text="Export chain gcode")
-						#layout.operator("object.calculate_cam_paths_background", text="Calculate path in background")
+						layout.operator("object.calculate_chain_cam_paths")
+						layout.operator("object.export_chain_cam_paths")
 						layout.operator("object.cam_simulate_chain", text="Simulate this chain")
 					else:
 						layout.label("chain invalid, can't compute")

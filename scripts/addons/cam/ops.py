@@ -213,8 +213,8 @@ class CalculatePath(bpy.types.Operator):
 		
 		o.operator=self
 		
-		if o.use_layers:
-			o.parallel_step_back = False
+		#if o.use_layers:
+		#	o.parallel_step_back = False
 			
 		utils.getPath(context,o)
 		
@@ -285,23 +285,46 @@ def getChainOperations(chain):
 				chop.append(so)
 	return chop
 	
-class PathsChain(bpy.types.Operator):
-	'''calculate a chain and export the gcode alltogether. '''
-	bl_idname = "object.calculate_cam_paths_chain"
-	bl_label = "Calculate CAM paths in current chain and export chain gcode"
+class ExportChain(bpy.types.Operator):
+	'''export gcode for CAM paths in current chain'''
+	bl_idname = "object.export_chain_cam_paths"
+	bl_label = "Export Chain paths to G-Code"
 	bl_options = {'REGISTER', 'UNDO'}
 
 	def execute(self, context):
 		import bpy
-		s=bpy.context.scene
+		s = bpy.context.scene
 		
-		chain=s.cam_chains[s.cam_active_chain]
-		chainops=getChainOperations(chain)
-		meshes=[]
+		chain = s.cam_chains[s.cam_active_chain]
+		chainops = getChainOperations(chain)
+		meshes = []
 		for o in chainops:
 			#bpy.ops.object.calculate_cam_paths_background()
 			meshes.append(bpy.data.objects[o.path_object_name].data)
-		utils.exportGcodePath(chain.filename,meshes,chainops)
+			
+		utils.exportGcodePath(chain.filename, meshes, chainops)
+		
+		return {'FINISHED'}
+
+class CalculateChain(bpy.types.Operator):
+	'''Calculate CAM paths in current chain and export to gcode'''
+	bl_idname = "object.calculate_chain_cam_paths"
+	bl_label = "Calculate Paths for Chain"
+	bl_options = {'REGISTER', 'UNDO'}
+
+	def execute(self, context):
+		import bpy
+		s = bpy.context.scene
+		
+		chain = s.cam_chains[s.cam_active_chain]
+		chainops = getChainOperations(chain)
+		
+		for i in range(0,len(chainops)):
+			s.cam_active_operation = s.cam_operations.find(chainops[i].name)
+			bpy.ops.object.calculate_cam_path()
+		
+		bpy.ops.object.export_chain_cam_paths
+
 		return {'FINISHED'}
 	
 		
