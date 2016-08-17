@@ -655,6 +655,7 @@ class CAM_OPTIMISATION_Panel(CAMButtonsPanel, bpy.types.Panel):
 						layout.prop(ao,'use_exact')
 						if ao.use_exact:
 							layout.prop(ao,'exact_subdivide_edges')
+							layout.prop(ao,'use_opencamlib')
 					if exclude_exact or not ao.use_exact:
 						layout.prop(ao,'pixsize')
 						layout.prop(ao,'imgres_limit')
@@ -663,12 +664,10 @@ class CAM_OPTIMISATION_Panel(CAMButtonsPanel, bpy.types.Panel):
 						sy=ao.max.y-ao.min.y
 						resx=int(sx/ao.pixsize)
 						resy=int(sy/ao.pixsize)
-						l='resolution: '+str(resx)+' x '+str(resy)
-						layout.label( l)
+						layout.label('image size in pixels: '+str(resx)+' x '+str(resy)+' = '+str(resx * resy))
 					
 				layout.prop(ao,'simulation_detail')
 				layout.prop(ao,'circle_detail')
-				layout.prop(ao,'use_opencamlib')
 				#if not ao.use_exact:#this will be replaced with groups of objects.
 				#layout.prop(ao,'render_all')# replaced with groups support
 		
