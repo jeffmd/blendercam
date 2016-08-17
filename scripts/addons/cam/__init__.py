@@ -574,10 +574,10 @@ class camOperation(bpy.types.PropertyGroup):
 	merge_dist = FloatProperty(name="Merge distance - EXPERIMENTAL", default=0.0, min=0.0000, max=0.1,precision=PRECISION, unit="LENGTH", update = updateRest)
 	#optimization and performance
 	circle_detail = IntProperty(name="Detail of circles used for curve offsets", default=64, min=12, max=512, update = updateRest)
-	use_exact = BoolProperty(name="Use exact mode",description="Exact mode allows greater precision, but is slower with complex meshes", default=True, update = updateExact)
+	use_exact = BoolProperty(name="Use exact mode",description="Uses Bullet physics engine. Exact mode allows greater precision, but is slower with complex meshes", default=True, update = updateExact)
 	exact_subdivide_edges = BoolProperty(name="Auto subdivide long edges",description="This can avoid some collision issues when importing CAD models", default=False, update = updateExact)
 	use_opencamlib = BoolProperty(name="Use OpenCAMLib",description="Use OpenCAMLib to sample paths or get waterline shape", default=False, update = updateOpencamlib)
-	pixsize = FloatProperty(name="sampling raster detail", default=0.0001, min=0.00001, max=0.1,precision=PRECISION, unit="LENGTH", update = updateZbufferImage)
+	pixsize = FloatProperty(name="sampling pixel size", description="the physical size of a pixel in the image. The smaller the pixel size is the larger the image will be and processing will be slower", default=0.0001, min=0.00001, max=0.1,precision=PRECISION, unit="LENGTH", update = updateZbufferImage)
 	simulation_detail = FloatProperty(name="Simulation sampling raster detail", default=0.0002, min=0.00001, max=0.01,precision=PRECISION, unit="LENGTH", update = updateRest)
 	do_simulation_feedrate = BoolProperty(name="Adjust feedrates with simulation EXPERIMENTAL",description="Adjust feedrates with simulation", default=False, update = updateRest)
 	
