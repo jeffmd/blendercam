@@ -549,7 +549,7 @@ class camOperation(bpy.types.PropertyGroup):
 	protect_vertical = BoolProperty(name="Protect vertical",description="The path goes only vertically next to steep areas", default=True)
 	protect_vertical_limit = FloatProperty(name="Verticality limit", description="What angle is allready considered vertical", default=math.pi/45, min=0, max=math.pi*0.5 , precision=0, subtype="ANGLE" , unit="ROTATION" , update = updateRest)
 		
-	ambient_behaviour = EnumProperty(name='Ambient',items=(('ALL', 'All', 'a'),('AROUND', 'Around', 'a')   ),description='handling ambient surfaces',default='ALL', update = updateZbufferImage)
+	ambient_behaviour = EnumProperty(name='Ambient',items=(('ALL', 'All', 'all ambient inclusive'),('AROUND', 'Around', 'ambiant around object defined by radius')   ),description='handling ambient surfaces',default='ALL', update = updateZbufferImage)
 	
 
 	ambient_radius = FloatProperty(name="Ambient radius", description="Radius around the part which will be milled if ambient is set to Around", min=0.0, max=100.0, default=0.01, precision=PRECISION, unit="LENGTH", update = updateRest)
