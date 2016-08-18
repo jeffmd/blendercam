@@ -86,7 +86,7 @@ def positionObject(operation):
 
 def getBoundsWorldspace(obs, use_modifiers = False):
 	#progress('getting bounds of object(s)')
-	t=time.time()
+	#t=time.time()
 		
 	maxx=maxy=maxz=-10000000
 	minx=miny=minz=10000000
@@ -1009,7 +1009,7 @@ def chunksToMesh(chunks,o):
 			#print(verts_rotations)
 	if o.use_exact and not o.use_opencamlib:
 		cleanupBulletCollision(o)
-	print(time.time()-t)
+	printTimeElapsed(t)
 	t=time.time()
 	
 	#actual blender object generation starts here:
@@ -1050,7 +1050,7 @@ def chunksToMesh(chunks,o):
 
 	
 		
-	print(time.time()-t)
+	printTimeElapsed(t)
 	
 	ob.location=(0,0,0)
 	o.path_object_name=oname
@@ -1366,7 +1366,7 @@ def exportGcodePath(filename,vertslist,operations):
 	
 	c.program_end()
 	c.file_close()
-	print(time.time()-t)
+	printTimeElapsed(t)
 
 def curveToShapely(cob, use_modifiers = False):
 	chunks=curveToChunks(cob, use_modifiers)
@@ -1771,7 +1771,7 @@ def getObjectSilhouete(stype, objects=None, use_modifiers = False):
 				print('joining')
 				p=sops.unary_union(bigshapes)
 					
-			print(time.time()-t)
+			printTimeElapsed(t)
 			
 			t=time.time()
 			silhouete = [p]#[polygon_utils_cam.Shapely2Polygon(p)]
@@ -1801,7 +1801,8 @@ def getAmbient(o):
 				if o.ambient_cutter_restrict:
 					o.limit_poly = o.limit_poly.buffer(o.cutter_diameter/2,resolution = o.circle_detail)
 			o.ambient = o.ambient.intersection(o.limit_poly)
-	o.update_ambient_tag=False
+		
+		o.update_ambient_tag = False
 	
 def getObjectOutline(radius,o,Offset):#FIXME: make this one operation independent
 #circle detail, optimize, optimize thresold.
@@ -3134,7 +3135,7 @@ def getPath3axis(context, operation):
 						chi=chi-1
 					chi+=1
 			'''
-		print(time.time()-tw)
+		printTimeElapsed(tw)
 		chunksToMesh(chunks,o)	
 		
 	elif o.strategy=='DRILL':
@@ -3176,7 +3177,7 @@ def checkEqual(lst):
 	return lst[1:] == lst[:-1]	
 	
 def getPath4axis(context,operation):
-	t=time.clock()
+	t=time.time()
 	s=bpy.context.scene
 	o=operation
 	getBounds(o)
@@ -3314,7 +3315,7 @@ def rotTo2axes(e,axescombination):
 	return(angle1,angle2)
 	
 def getPath(context,operation):#should do all path calculations.
-	t=time.clock()
+	t=time.time()
 	#print('ahoj0')
 	if shapely.speedups.available:
 		shapely.speedups.enable()
@@ -3366,8 +3367,7 @@ def getPath(context,operation):#should do all path calculations.
 	progressEnd()
 
 	operation.changed=False
-	t1=time.clock()-t 
-	progress('total time',t1)
+	printTimeElapsed(t) 
 
 def reload_paths(o):
 	oname = "cam_path_"+o.name
