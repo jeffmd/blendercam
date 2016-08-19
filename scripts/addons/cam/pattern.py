@@ -33,6 +33,23 @@ import shapely
 from shapely import geometry as sgeometry
 import numpy
 
+def adjustInsideOut(o, pathchunks, xandy=True):
+	if o.movement_insideout=='OUTSIDEIN':
+		pathchunks.reverse()
+	for chunk in pathchunks:
+		if o.movement_insideout=='OUTSIDEIN':
+			chunk.points.reverse()
+		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CCW'):
+			if xandy:
+				# flip x and y axis
+				chunk.points.reverse()
+			else:
+				# only flip x axis
+				for si in range(0,len(chunk.points)):
+					s=chunk.points[si]
+					chunk.points[si]=(o.max.x+o.min.x-s[0],s[1],s[2])
+			
+	
 def getPathPatternParallel(o,angle):
 	zlevel=1
 	pathd=o.dist_between_paths
@@ -165,50 +182,46 @@ def getPathPatternBlock(o):
 	chunk=camPathChunk([])
 	i=0
 	while maxxp-minxp>0 and maxyp-minyp>0:
-		y=minyp
-		for a in range(ceil(minxp/pathstep),ceil(maxxp/pathstep),1):
-			x=a*pathstep
-			chunk.points.append((x,y,zlevel))
+		y = minyp
+		for a in range(ceil(minxp/pathstep), ceil(maxxp/pathstep), 1):
+			x = a * pathstep
+			chunk.points.append((x, y, zlevel))
 			
 		if i>0:
-			minxp+=pathd
+			minxp += pathd
 		chunk.points.append((maxxp,minyp,zlevel))
-		x=maxxp 
 		
-		for a in range(ceil(minyp/pathstep),ceil(maxyp/pathstep),1):
-			y=a*pathstep
-			chunk.points.append((x,y,zlevel))
+		x = maxxp 
+		for a in range(ceil(minyp/pathstep), ceil(maxyp/pathstep), 1):
+			y = a * pathstep
+			chunk.points.append((x, y, zlevel))
 			
-		minyp+=pathd
-		chunk.points.append((maxxp,maxyp,zlevel))
+		minyp += pathd
+		chunk.points.append((maxxp, maxyp, zlevel))
 		 
-		y=maxyp 
-		for a in range(floor(maxxp/pathstep),ceil(minxp/pathstep),-1):
-			x=a*pathstep
-			chunk.points.append((x,y,zlevel))
+		y = maxyp
+		for a in range(floor(maxxp/pathstep), ceil(minxp/pathstep), -1):
+			x = a*pathstep
+			chunk.points.append((x, y, zlevel))
 		 
-		maxxp-=pathd
-		chunk.points.append((minxp,maxyp,zlevel)) 
+		maxxp -= pathd
+		chunk.points.append((minxp, maxyp, zlevel)) 
 		  
-		x=minxp 
-		for a in range(floor(maxyp/pathstep),ceil(minyp/pathstep),-1):
-			y=a*pathstep
-			chunk.points.append((x,y,zlevel))
-		chunk.points.append((minxp,minyp,zlevel))
+		x = minxp
+		for a in range(floor(maxyp/pathstep), ceil(minyp/pathstep),-1):
+			y = a*pathstep
+			chunk.points.append((x, y, zlevel))
+			
+		chunk.points.append((minxp, minyp, zlevel))
 		maxyp -= pathd
 		i += 1 
-		
-		
-	if o.movement_insideout=='INSIDEOUT':
-		chunk.points.reverse()
-	if (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW'):
-		for si in range(0,len(chunk.points)):
-			s=chunk.points[si]
-			chunk.points[si]=(o.max.x+o.min.x-s[0],s[1],s[2])
-	#if insideout:
-	#  chunk.reverse()
 	
-	return [chunk]
+	# chunk is built outside to inside but adjustInsideOut assumes the default is inside to outside	
+	chunk.points.reverse()
+	pathchunks = [chunk]
+	adjustInsideOut(o, pathchunks, False)
+	
+	return pathchunks
 
 def getPathPatternSpiral(o):
 	pathchunks = []
@@ -243,17 +256,9 @@ def getPathPatternSpiral(o):
 			
 	if len(chunk.points)>0:
 		pathchunks.append(chunk)
-	if o.movement_insideout=='OUTSIDEIN':
-		pathchunks.reverse()
-	for chunk in pathchunks:
-		if o.movement_insideout=='OUTSIDEIN':
-			chunk.points.reverse()
-			
-		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CCW'):
-			for si in range(0,len(chunk.points)):
-				s=chunk.points[si]
-				chunk.points[si]=(o.max.x+o.min.x-s[0],s[1],s[2])
 	
+	adjustInsideOut(o, pathchunks, False)	
+			
 	return pathchunks
 
 def getPathPatternCircles(o):
@@ -314,44 +319,35 @@ def getPathPatternCircles(o):
 		for ch in laststepchunks:
 			for p in currentstepchunks:
 				parentChildDist(p,ch,o)
-		
-	if o.movement_insideout=='OUTSIDEIN':
-		pathchunks.reverse()
-	for chunk in pathchunks:
-		if o.movement_insideout=='OUTSIDEIN':
-			chunk.points.reverse()
-		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CCW'):
-			chunk.points.reverse()
-			#for si in range(0,len(chunk.points)):
-				#s=chunk.points[si]
-				#chunk.points[si]=(o.max.x+o.min.x-s[0],s[1],s[2])
-	#pathchunks=sortChunks(pathchunks,o)not until they get hierarchy parents!
+	
+	adjustInsideOut(o, pathchunks)	
 	
 	return pathchunks
 
 def getPathPatternOutlinefill(o):
-	polys=operation.silhouete
-	pathchunks=[]
-	chunks=[]
+	polys = operation.silhouete
+	pathchunks = []
+	chunks = []
+	
 	for p in polys:
 		p=p.buffer(-o.dist_between_paths/10,o.circle_detail)#first, move a bit inside, because otherwise the border samples go crazy very often changin between hit/non hit and making too many jumps in the path.
 		chunks.extend(shapelyToChunks(p,0))
 	
 	pathchunks.extend(chunks)
-	lastchunks=chunks
-	firstchunks=chunks
+	lastchunks = chunks
+	firstchunks = chunks
 	
 	#for ch in chunks:
 	#   if len(ch.points)>2:
 	#	 polys.extend()
 			
-	approxn=(min(o.max.x - o.min.x, o.max.y - o.min.y)/o.dist_between_paths)/2
-	i=0
+	approxn = (min(o.max.x - o.min.x, o.max.y - o.min.y)/o.dist_between_paths)/2
+	i = 0
 	
 	for porig in polys:
-		p=porig
+		p = porig
 		while not p.is_empty:#:p.nPoints()>0:
-			p=p.buffer(-o.dist_between_paths,o.circle_detail)
+			p = p.buffer(-o.dist_between_paths, o.circle_detail)
 			if not p.is_empty:
 				nchunks=shapelyToChunks(p,zlevel)
 				
@@ -360,10 +356,11 @@ def getPathPatternOutlinefill(o):
 				else:
 					parentChildDist(nchunks,lastchunks,o)
 				pathchunks.extend(nchunks)
-				lastchunks=nchunks
-			percent=int(i/approxn*100)
+				lastchunks = nchunks
+			percent = int(i/approxn*100)
 			progress('outlining polygons ',percent) 
-			i+=1
+			i += 1
+			
 	pathchunks.reverse()
 	if not(o.inverse):#dont do ambient for inverse milling
 		lastchunks=firstchunks
@@ -387,14 +384,7 @@ def getPathPatternOutlinefill(o):
 					pathchunks.extend(nchunks)
 					lastchunks=nchunks
 	
-	if o.movement_insideout == 'OUTSIDEIN':
-		pathchunks.reverse()
-	
-	for chunk in pathchunks:
-		if o.movement_insideout=='OUTSIDEIN':
-			chunk.points.reverse()
-		if (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW'):
-			chunk.points.reverse()
+	adjustInsideOut(o, pathchunks)	
 	
 	#parentChildPoly(pathchunks,pathchunks,o)	
 	chunksRefine(pathchunks,o)
