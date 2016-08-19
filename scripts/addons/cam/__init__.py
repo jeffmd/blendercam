@@ -566,9 +566,9 @@ class camOperation(bpy.types.PropertyGroup):
 	spindle_rpm = FloatProperty(name="Spindle rpm", description="Spindle speed ", min=1000, max=60000, default=12000, update = updateChipload)
 	#movement parallel_step_back 
 	movement_type = EnumProperty(name='Movement type',items=(('CONVENTIONAL','Conventional / Up milling', 'cutter rotates against the direction of the feed'),('CLIMB', 'Climb / Down milling', 'cutter rotates with the direction of the feed'),('MEANDER', 'Meander / Zig Zag' , 'cutting is done both with and against the rotation of the spindle')	 ),description='movement type', default='CLIMB', update = updateRest)
-	spindle_rotation_direction = EnumProperty(name='Spindle rotation', items=(('CW','Clock wise', 'a'),('CCW', 'Counter clock wise', 'a')),description='Spindle rotation direction',default='CW', update = updateRest)
+	spindle_rotation_direction = EnumProperty(name='Spindle rotation', items=(('CW','Clockwise', 'tool bit spins clockwise'),('CCW', 'Counter clockwise', 'tool bit spins counter clock wise')),description='Spindle rotation direction',default='CW', update = updateRest)
 	free_movement_height = FloatProperty(name="Free movement height", default=0.01, min=0.0000, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
-	movement_insideout = EnumProperty(name='Direction', items=(('INSIDEOUT','Inside out', 'a'),('OUTSIDEIN', 'Outside in', 'a')),description='approach to the piece',default='INSIDEOUT', update = updateRest)
+	movement_insideout = EnumProperty(name='Direction', items=(('INSIDEOUT','Inside out', 'Path starts at the center/inside and works its way to the outside perimeter of the work area'),('OUTSIDEIN', 'Outside in', 'Path starts at the outside perimeter or the work area and works its way to the inside')),description='approach to the piece',default='INSIDEOUT', update = updateRest)
 	parallel_step_back =  BoolProperty(name="Parallel step back", description='For roughing and finishing in one pass: mills material in climb mode, then steps back and goes between 2 last chunks back', default=False, update = updateRest)
 	stay_low = BoolProperty(name="Stay low if possible", default=True, update = updateRest)
 	merge_dist = FloatProperty(name="Merge distance - EXPERIMENTAL", default=0.0, min=0.0000, max=0.1,precision=PRECISION, unit="LENGTH", update = updateRest)
