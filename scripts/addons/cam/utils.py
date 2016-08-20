@@ -347,7 +347,6 @@ def samplePathLow(o,ch1,ch2,dosample):
 def sampleChunks(o,pathSamples,layers):
 	#
 	minx,miny,minz,maxx,maxy,maxz=o.min.x,o.min.y,o.min.z,o.max.x,o.max.y,o.max.z
-	getAmbient(o)  
 
 	if o.use_exact:#prepare collision world
 		if o.use_opencamlib:
@@ -2562,7 +2561,6 @@ def strategy_pocket( o ):
 
 	if o.first_down:
 		chunks = sortChunks(chunks, o)
-
 		
 	return chunks
 		
@@ -2842,7 +2840,6 @@ def strategy_3d_path_carve( o ):
 		
 	elif o.strategy=='PENCIL':
 		prepareArea(o)
-		getAmbient(o)
 		pathSamples=getOffsetImageCavities(o,o.offset_image)
 		#for ch in pathSamples:
 		#	for i,p in enumerate(ch.points):
@@ -2903,240 +2900,248 @@ def strategy_3d_path_carve( o ):
 			useBridges(chunk,o)
 			
 	return chunks
+
+def strategy_waterline_ocl( o ):
+	chunks = []
+	oclGetWaterline(o, chunks)
+	chunks = limitChunks(chunks, o)
+	if (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW'):
+		for ch in chunks:
+			ch.points.reverse()
+	
+	return chunks
+
+def strategy_waterline( o ):
+	topdown=True
+	tw=time.time()
+	chunks=[]
+	progress ('retrieving object slices')
+	prepareArea(o)
+	layerstep=1000000000
+	if o.use_layers:
+		layerstep=math.floor(o.stepdown/o.slice_detail)
+		if layerstep==0:
+			layerstep=1
+			
+	#for projection of filled areas	 
+	layerstart=0#
+	layerend=o.min.z#
+	layers=[[layerstart,layerend]]
+	#######################	 
+	nslices=ceil(abs(o.minz/o.slice_detail))
+	lastislice=numpy.array([])
+	lastslice=spolygon.Polygon()#polyversion
+	layerstepinc=0
+	
+	slicesfilled=0
+	#polyToMesh(o.ambient,0)
+	for h in range(0,nslices):
+		layerstepinc+=1
+		slicechunks=[]
+		z=o.minz+h*o.slice_detail
+		if h==0:
+			z+=0.0000001# if people do mill flat areas, this helps to reach those... otherwise first layer would actually be one slicelevel above min z.
+		#print(z)
+		#sliceimage=o.offset_image>z
+		islice=o.offset_image>z
+		slicepolys=imageToShapely(o,islice,with_border=True)
+		#for pviz in slicepolys:
+		#	polyToMesh('slice',pviz,z)
+		poly=spolygon.Polygon()#polygversion
+		lastchunks=[]
+		#imagechunks=imageToChunks(o,islice)
+		#for ch in imagechunks:
+		#	slicechunks.append(camPathChunk([]))
+		#	for s in ch.points:
+		#	 slicechunks[-1].points.append((s[0],s[1],z))
+				
 		
+		#print('found polys',layerstepinc,len(slicepolys))
+		for p in slicepolys:
+			#print('polypoints',p.nPoints(0))
+			poly=poly.union(p)#polygversion TODO: why is this added?
+			#print()
+			#polyToMesh(p,z)
+			nchunks=shapelyToChunks(p,z)
+			nchunks=limitChunks(nchunks,o, force=True)
+			#print('chunksnum',len(nchunks))
+			#if len(nchunks)>0:
+			#	print('chunkpoints',len(nchunks[0].points))
+			#print()
+			lastchunks.extend(nchunks)
+			slicechunks.extend(nchunks)
+			#print('totchunks',len(slicechunks))
+		if len(slicepolys)>0:
+			slicesfilled+=1
+			#chunks.extend(polyToChunks(slicepolys[1],z))
+			#print(len(p),'slicelen')
+		
+		
+		#
+		#print(len(lastslice))
+		#'''
+		if o.waterline_fill:
+			layerstart=min(o.maxz,z+o.slice_detail)#
+			layerend=max(o.min.z,z-o.slice_detail)#
+			layers=[[layerstart,layerend]]
+			#####################################
+			#fill top slice for normal and first for inverse, fill between polys
+			if not lastslice.is_empty or (o.inverse and not poly.is_empty and slicesfilled==1):
+				#offs=False
+				if not lastslice.is_empty:#between polys
+					if o.inverse:
+						restpoly=poly.difference(lastslice)
+					else:
+						restpoly=lastslice.difference(poly)
+					#print('filling between')
+				if (not o.inverse and poly.is_empty and slicesfilled>0) or (o.inverse and not poly.is_empty and slicesfilled==1):#first slice fill
+					restpoly=lastslice
+					#print('filling first')
+				
+				#print(len(restpoly))
+				#polyToMesh('fillrest',restpoly,z)
+					
+				restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
+				
+				fillz = z 
+				i=0
+				while not restpoly.is_empty:
+					nchunks=shapelyToChunks(restpoly,fillz)
+					#project paths TODO: path projection during waterline is not working
+					if o.waterline_project:
+						nchunks=chunksRefine(nchunks,o)
+						nchunks=sampleChunks(o,nchunks,layers)
+						
+					nchunks=limitChunks(nchunks,o, force=True)
+					#########################
+					slicechunks.extend(nchunks)
+					parentChildDist(lastchunks,nchunks,o)
+					lastchunks=nchunks
+					#slicechunks.extend(polyToChunks(restpoly,z))
+					restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
+					
+					i+=1
+					#print(i)
+			i=0
+			#'''
+			#####################################
+			# fill layers and last slice, last slice with inverse is not working yet - inverse millings end now always on 0 so filling ambient does have no sense.
+			if (slicesfilled>0 and layerstepinc==layerstep) or (not o.inverse and not poly.is_empty and slicesfilled==1) or (o.inverse and poly.is_empty and slicesfilled>0):
+				fillz=z
+				layerstepinc=0
+				
+				#ilim=1000#TODO:this should be replaced... no limit, just check if the shape grows over limits.
+				
+				#offs=False
+				boundrect=o.ambient
+				restpoly=boundrect.difference(poly)
+				if (o.inverse and poly.is_empty and slicesfilled>0):
+					restpoly=boundrect.difference(lastslice)
+				
+				restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
+				
+				i=0
+				while not restpoly.is_empty: #'GeometryCollection':#len(restpoly.boundary.coords)>0:
+					#print(i)
+					nchunks=shapelyToChunks(restpoly,fillz)
+					#########################
+					nchunks=limitChunks(nchunks,o, force=True)
+					slicechunks.extend(nchunks)
+					parentChildDist(lastchunks,nchunks,o)
+					lastchunks=nchunks
+					#slicechunks.extend(polyToChunks(restpoly,z))
+					restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
+					i+=1
+			
+			
+			#'''
+			percent=int(h/nslices*100)
+			progress('waterline layers ',percent)  
+			lastslice=poly
+			
+		#print(poly)
+		#print(len(lastslice))
+		'''
+		if len(lastislice)>0:
+			i=numpy.logical_xor(lastislice , islice)
+			
+			n=0
+			while i.sum()>0 and n<10000:
+				i=outlineImageBinary(o,o.dist_between_paths,i,False)
+				polys=imageToShapely(o,i)
+				for poly in polys:
+					chunks.extend(polyToChunks(poly,z))
+				n+=1
+		
+	
+				#restpoly=outlinePoly(restpoly,o.dist_between_paths,oo.circle_detail,o.optimize,o.optimize_threshold,,False)
+				#chunks.extend(polyToChunks(restpoly,z))
+				
+		lastislice=islice
+		'''
+		
+		
+		#if bpy.app.debug_value==1:
+		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW') or (o.movement_type=='CLIMB' and o.		spindle_rotation_direction=='CW'):
+			for chunk in slicechunks:
+				chunk.points.reverse()
+		slicechunks=sortChunks(slicechunks,o)
+		if topdown:
+			slicechunks.reverse()
+		#project chunks in between
+		
+		chunks.extend(slicechunks)
+		
+	#chunks=sortChunks(chunks,o)
+	if topdown:
+		chunks.reverse()
+		'''
+		chi=0
+		if len(chunks)>2:
+			while chi<len(chunks)-2:
+				d=dist2d((chunks[chi][-1][0],chunks[chi][-1][1]),(chunks[chi+1][0][0],chunks[chi+1][0][1]))
+				if chunks[chi][0][2]>=chunks[chi+1][0][2] and d<o.dist_between_paths*2:
+					chunks[chi].extend(chunks[chi+1])
+					chunks.remove(chunks[chi+1])
+					chi=chi-1
+				chi+=1
+		'''
+	printTimeElapsed(tw)
+	return chunks
+	
 #this is the main function.
 #FIXME: split strategies into separate file!
 def getPath3axis(context, operation):
 	s=bpy.context.scene
 	o=operation
-	getBounds(o)
 	progressUpdate()
+	getBounds(o)
+	getAmbient(o)
 	chunks = []
 	
 	if o.strategy=='CUTOUT':
-		chunks = strategy_cutout( o )
+		chunks = strategy_cutout(o)
 		
 	elif o.strategy=='CURVE':
-		chunks = strategy_curve( o )
+		chunks = strategy_curve(o)
 				
 	elif o.strategy=='PROJECTED_CURVE':
 		chunks = strategy_proj_curve(s, o)
 		
 	elif o.strategy=='POCKET':
-		chunks = strategy_pocket( o )
+		chunks = strategy_pocket(o)
 	
 		
 	elif o.strategy in ['PARALLEL', 'CROSS', 'BLOCK', 'SPIRAL', 'CIRCLES', 'OUTLINEFILL', 'CARVE', 'PENCIL', 'CRAZY']:
-		chunks = strategy_3d_path_carve( o )
+		chunks = strategy_3d_path_carve(o)
 		
 		
 	elif o.strategy=='WATERLINE' and o.use_opencamlib:
-		getAmbient(o)
-		chunks=[]
-		oclGetWaterline(o, chunks)
-		chunks=limitChunks(chunks,o)
-		if (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW') or (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW'):
-			for ch in chunks:
-				ch.points.reverse()
+		chunks = strategy_waterline_ocl(o)
 		
 		
 	elif o.strategy=='WATERLINE' and not o.use_opencamlib:
-		topdown=True
-		tw=time.time()
-		chunks=[]
-		progress ('retrieving object slices')
-		prepareArea(o)
-		layerstep=1000000000
-		if o.use_layers:
-			layerstep=math.floor(o.stepdown/o.slice_detail)
-			if layerstep==0:
-				layerstep=1
-				
-		#for projection of filled areas	 
-		layerstart=0#
-		layerend=o.min.z#
-		layers=[[layerstart,layerend]]
-		#######################	 
-		nslices=ceil(abs(o.minz/o.slice_detail))
-		lastislice=numpy.array([])
-		lastslice=spolygon.Polygon()#polyversion
-		layerstepinc=0
-		
-		slicesfilled=0
-		getAmbient(o)
-		#polyToMesh(o.ambient,0)
-		for h in range(0,nslices):
-			layerstepinc+=1
-			slicechunks=[]
-			z=o.minz+h*o.slice_detail
-			if h==0:
-				z+=0.0000001# if people do mill flat areas, this helps to reach those... otherwise first layer would actually be one slicelevel above min z.
-			#print(z)
-			#sliceimage=o.offset_image>z
-			islice=o.offset_image>z
-			slicepolys=imageToShapely(o,islice,with_border=True)
-			#for pviz in slicepolys:
-			#	polyToMesh('slice',pviz,z)
-			poly=spolygon.Polygon()#polygversion
-			lastchunks=[]
-			#imagechunks=imageToChunks(o,islice)
-			#for ch in imagechunks:
-			#	slicechunks.append(camPathChunk([]))
-			#	for s in ch.points:
-			#	 slicechunks[-1].points.append((s[0],s[1],z))
-					
-			
-			#print('found polys',layerstepinc,len(slicepolys))
-			for p in slicepolys:
-				#print('polypoints',p.nPoints(0))
-				poly=poly.union(p)#polygversion TODO: why is this added?
-				#print()
-				#polyToMesh(p,z)
-				nchunks=shapelyToChunks(p,z)
-				nchunks=limitChunks(nchunks,o, force=True)
-				#print('chunksnum',len(nchunks))
-				#if len(nchunks)>0:
-				#	print('chunkpoints',len(nchunks[0].points))
-				#print()
-				lastchunks.extend(nchunks)
-				slicechunks.extend(nchunks)
-				#print('totchunks',len(slicechunks))
-			if len(slicepolys)>0:
-				slicesfilled+=1
-				#chunks.extend(polyToChunks(slicepolys[1],z))
-				#print(len(p),'slicelen')
-			
-			
-			#
-			#print(len(lastslice))
-			#'''
-			if o.waterline_fill:
-				layerstart=min(o.maxz,z+o.slice_detail)#
-				layerend=max(o.min.z,z-o.slice_detail)#
-				layers=[[layerstart,layerend]]
-				#####################################
-				#fill top slice for normal and first for inverse, fill between polys
-				if not lastslice.is_empty or (o.inverse and not poly.is_empty and slicesfilled==1):
-					#offs=False
-					if not lastslice.is_empty:#between polys
-						if o.inverse:
-							restpoly=poly.difference(lastslice)
-						else:
-							restpoly=lastslice.difference(poly)
-						#print('filling between')
-					if (not o.inverse and poly.is_empty and slicesfilled>0) or (o.inverse and not poly.is_empty and slicesfilled==1):#first slice fill
-						restpoly=lastslice
-						#print('filling first')
-					
-					#print(len(restpoly))
-					#polyToMesh('fillrest',restpoly,z)
-						
-					restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
-					
-					fillz = z 
-					i=0
-					while not restpoly.is_empty:
-						nchunks=shapelyToChunks(restpoly,fillz)
-						#project paths TODO: path projection during waterline is not working
-						if o.waterline_project:
-							nchunks=chunksRefine(nchunks,o)
-							nchunks=sampleChunks(o,nchunks,layers)
-							
-						nchunks=limitChunks(nchunks,o, force=True)
-						#########################
-						slicechunks.extend(nchunks)
-						parentChildDist(lastchunks,nchunks,o)
-						lastchunks=nchunks
-						#slicechunks.extend(polyToChunks(restpoly,z))
-						restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
-						
-						i+=1
-						#print(i)
-				i=0
-				#'''
-				#####################################
-				# fill layers and last slice, last slice with inverse is not working yet - inverse millings end now always on 0 so filling ambient does have no sense.
-				if (slicesfilled>0 and layerstepinc==layerstep) or (not o.inverse and not poly.is_empty and slicesfilled==1) or (o.inverse and poly.is_empty and slicesfilled>0):
-					fillz=z
-					layerstepinc=0
-					
-					#ilim=1000#TODO:this should be replaced... no limit, just check if the shape grows over limits.
-					
-					#offs=False
-					boundrect=o.ambient
-					restpoly=boundrect.difference(poly)
-					if (o.inverse and poly.is_empty and slicesfilled>0):
-						restpoly=boundrect.difference(lastslice)
-					
-					restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
-					
-					i=0
-					while not restpoly.is_empty: #'GeometryCollection':#len(restpoly.boundary.coords)>0:
-						#print(i)
-						nchunks=shapelyToChunks(restpoly,fillz)
-						#########################
-						nchunks=limitChunks(nchunks,o, force=True)
-						slicechunks.extend(nchunks)
-						parentChildDist(lastchunks,nchunks,o)
-						lastchunks=nchunks
-						#slicechunks.extend(polyToChunks(restpoly,z))
-						restpoly=restpoly.buffer(-o.dist_between_paths, resolution = o.circle_detail)
-						i+=1
-				
-				
-				#'''
-				percent=int(h/nslices*100)
-				progress('waterline layers ',percent)  
-				lastslice=poly
-				
-			#print(poly)
-			#print(len(lastslice))
-			'''
-			if len(lastislice)>0:
-				i=numpy.logical_xor(lastislice , islice)
-				
-				n=0
-				while i.sum()>0 and n<10000:
-					i=outlineImageBinary(o,o.dist_between_paths,i,False)
-					polys=imageToShapely(o,i)
-					for poly in polys:
-						chunks.extend(polyToChunks(poly,z))
-					n+=1
-			
-		
-					#restpoly=outlinePoly(restpoly,o.dist_between_paths,oo.circle_detail,o.optimize,o.optimize_threshold,,False)
-					#chunks.extend(polyToChunks(restpoly,z))
-					
-			lastislice=islice
-			'''
-			
-			
-			#if bpy.app.debug_value==1:
-			if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW') or (o.movement_type=='CLIMB' and o.		spindle_rotation_direction=='CW'):
-				for chunk in slicechunks:
-					chunk.points.reverse()
-			slicechunks=sortChunks(slicechunks,o)
-			if topdown:
-				slicechunks.reverse()
-			#project chunks in between
-			
-			chunks.extend(slicechunks)
-		#chunks=sortChunks(chunks,o)
-		if topdown:
-			chunks.reverse()
-			'''
-			chi=0
-			if len(chunks)>2:
-				while chi<len(chunks)-2:
-					d=dist2d((chunks[chi][-1][0],chunks[chi][-1][1]),(chunks[chi+1][0][0],chunks[chi+1][0][1]))
-					if chunks[chi][0][2]>=chunks[chi+1][0][2] and d<o.dist_between_paths*2:
-						chunks[chi].extend(chunks[chi+1])
-						chunks.remove(chunks[chi+1])
-						chi=chi-1
-					chi+=1
-			'''
-		printTimeElapsed(tw)
-		chunksToMesh(chunks,o)	
+		chunks = strategy_waterline(o)
 		
 	elif o.strategy=='DRILL':
 		chunks = strategy_drill( o )
