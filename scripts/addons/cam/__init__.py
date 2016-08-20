@@ -399,8 +399,8 @@ class camOperation(bpy.types.PropertyGroup):
 	source_image_name = StringProperty(name='image_source', description='image source', update=operationValid)
 	geometry_source = EnumProperty(name='Source of data',
 		items=(
-			('OBJECT','object', 'a'),('GROUP','Group of objects', 'a'),('IMAGE','Image', 'a')),
-		description='Geometry source',
+			('OBJECT','object', 'mesh, curve, text'),('GROUP','Group of objects', 'objects that have been that have been put in a Group'),('IMAGE','Image', 'an image that has been loaded')),
+		description='Geometry source used when sampling',
 		default='OBJECT', update=updateOperationValid)
 	cutter_type = EnumProperty(name='Cutter',
 		items=(
@@ -408,8 +408,8 @@ class camOperation(bpy.types.PropertyGroup):
 			('BALLNOSE', 'Ballnose', 'ballnose cutter'),
 			('VCARVE', 'V-carve', 'v carve cutter'),
 			('BALL', 'Sphere', 'Sphere cutter'),
-			('CUSTOM', 'Custom-EXPERIMENTAL', 'modelled cutter - not well tested yet.')),
-		description='Type of cutter used',
+			('CUSTOM', 'Custom-EXPERIMENTAL', 'modeled cutter - must be a fully enclosed mesh, not well tested yet.')),
+		description='Type of cutter/tool bit used for the operation',
 		default='END', update = updateZbufferImage)
 	cutter_object_name = StringProperty(name='Cutter object', description='object used as custom cutter for this operation', update=updateZbufferImage)
 
@@ -463,17 +463,17 @@ class camOperation(bpy.types.PropertyGroup):
 		default='Z',
 		update = updateStrategy)
 	
-	skin = FloatProperty(name="Skin", description="Material to leave when roughing ", min=0.0, max=1.0, default=0.0,precision=PRECISION, unit="LENGTH", update = updateOffsetImage)
+	skin = FloatProperty(name="Skin", description="Thicknes of material to leave when roughing ", min=0.0, max=1.0, default=0.0,precision=PRECISION, unit="LENGTH", update = updateOffsetImage)
 	inverse = BoolProperty(name="Inverse milling",description="Male to female model conversion", default=False, update = updateOffsetImage)
 	array = BoolProperty(name="Use array",description="Create a repetitive array for producing the same thing manytimes", default=False, update = updateRest)
-	array_x_count = IntProperty(name="X count",description="X count", default=1,min=1, max=32000, update = updateRest)
-	array_y_count = IntProperty(name="Y count",description="Y count", default=1,min=1, max=32000, update = updateRest)
-	array_x_distance = FloatProperty(name="X distance", description="distance between operation origins", min=0.00001, max=1.0, default=0.01,precision=PRECISION, unit="LENGTH", update = updateRest)
-	array_y_distance = FloatProperty(name="Y distance", description="distance between operation origins", min=0.00001, max=1.0, default=0.01,precision=PRECISION, unit="LENGTH", update = updateRest)
+	array_x_count = IntProperty(name="X count",description="number of times the operation is repeated on the x axis", default=1,min=1, max=32000, update = updateRest)
+	array_y_count = IntProperty(name="Y count",description="number of times the operation is repeated on the y axis", default=1,min=1, max=32000, update = updateRest)
+	array_x_distance = FloatProperty(name="X distance", description="distance between operation origins on x axis", min=0.00001, max=1.0, default=0.01,precision=PRECISION, unit="LENGTH", update = updateRest)
+	array_y_distance = FloatProperty(name="Y distance", description="distance between operation origins on y axis", min=0.00001, max=1.0, default=0.01,precision=PRECISION, unit="LENGTH", update = updateRest)
 	
 	
 	# pocket options
-	pocket_option = EnumProperty(name='Start Position', items=(('INSIDE', 'Inside', 'a'), ('OUTSIDE', 'Outside', 'a'), ('MIDDLE', 'Middle', 'a')), description='Pocket starting position', default='MIDDLE', update=updateRest)
+	pocket_option = EnumProperty(name='Start Position', items=(('INSIDE', 'Inside', 'path starts at center of pocket area'), ('OUTSIDE', 'Outside', 'path starts at the outside perimeter of the pocket area'), ('MIDDLE', 'Middle', 'path starts in the middle of the pocket area')), description='Pocket starting position', default='MIDDLE', update=updateRest)
 	
 	#Cutout	   
 	cut_type = EnumProperty(name='Cut',items=(('OUTSIDE', 'Outside', 'a'),('INSIDE', 'Inside', 'a'),('ONLINE', 'On line', 'a')),description='Type of cutter used',default='OUTSIDE', update = updateRest)  
@@ -492,13 +492,13 @@ class camOperation(bpy.types.PropertyGroup):
 	#steps
 	dist_between_paths = FloatProperty(name="Distance between toolpaths", description="step over distance between tool paths", default=0.001, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateToolpathDist)
 	stepover_perc = FloatProperty(name="% of tool diameter", description="step over distance expressed as percentage of tool diameter", default=40.0, min=0.00, max=100 ,precision=1, subtype='PERCENTAGE', update = updateStepover)
-	dist_along_paths = FloatProperty(name="Distance along toolpaths", default=0.0002, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
+	dist_along_paths = FloatProperty(name="Distance along toolpaths", description="shorter distance gives better sampling accuracy but increases operation processing time", default=0.0002, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
 	parallel_angle = FloatProperty(name="Angle of paths", default=0, min=-360, max=360 , precision=0, subtype="ANGLE" , unit="ROTATION" , update = updateRest)
 	
 	#carve only
-	carve_depth = FloatProperty(name="Carve depth", default=0.001, min=-.100, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
+	carve_depth = FloatProperty(name="Carve depth", description="maximum depth to carve", default=0.001, min=-.100, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
 	#drill only
-	drill_type = EnumProperty(name='Holes on',items=(('MIDDLE_SYMETRIC', 'Middle of symetric curves', 'a'),('MIDDLE_ALL', 'Middle of all curve parts', 'a'),('ALL_POINTS', 'All points in curve', 'a')),description='Strategy to detect holes to drill',default='MIDDLE_SYMETRIC', update = updateRest)	
+	drill_type = EnumProperty(name='Holes on',items=(('MIDDLE_SYMETRIC', 'Middle of symetric curves', 'drill a hole at the center of each curve'),('MIDDLE_ALL', 'Middle of all curve parts', 'drill a hole at the center of the curves'),('ALL_POINTS', 'All points in curve', 'drill a hole at each point in the curve')),description='Strategy to detect holes to drill',default='MIDDLE_SYMETRIC', update = updateRest)	
 	#waterline only
 	slice_detail = FloatProperty(name="Distance betwen slices", default=0.001, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
 	waterline_fill = BoolProperty(name="Fill areas between slices",description="Fill areas between slices in waterline mode", default=True, update = updateRest)
@@ -506,7 +506,7 @@ class camOperation(bpy.types.PropertyGroup):
 	
 	#movement and ramps
 	use_layers = BoolProperty(name="Use Layers",description="Use layers for roughing", default=True, update = updateRest)
-	stepdown = FloatProperty(name="Step down", default=0.01, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
+	stepdown = FloatProperty(name="Step down", description="depth of cut in a layer/pass", default=0.01, min=0.00001, max=32,precision=PRECISION, unit="LENGTH", update = updateRest)
 	first_down = BoolProperty(name="First down",description="First go down on a contour, then go to the next one", default=False, update = updateRest)
 	ramp = BoolProperty(name="Ramp in - EXPERIMENTAL",description="Ramps down the whole contour, so the cutline looks like helix", default=False, update = updateRest)
 	ramp_out = BoolProperty(name="Ramp out - EXPERIMENTAL",description="Ramp out to not leave mark on surface", default=False, update = updateRest)
@@ -563,7 +563,7 @@ class camOperation(bpy.types.PropertyGroup):
 	feedrate = FloatProperty(name="Feedrate", description="Feedrate", min=0.00005, max=50.0, default=1.0,precision=PRECISION, unit="LENGTH", update = updateChipload)
 	plunge_feedrate = FloatProperty(name="Plunge speed ", description="% of feedrate", min=0.1, max=100.0, default=50.0,precision=1, subtype='PERCENTAGE', update = updateRest)
 	plunge_angle =	FloatProperty(name="Plunge angle", description="What angle is allready considered to plunge", default=math.pi/6, min=0, max=math.pi*0.5 , precision=0, subtype="ANGLE" , unit="ROTATION" , update = updateRest)
-	spindle_rpm = FloatProperty(name="Spindle rpm", description="Spindle speed ", min=1000, max=60000, default=12000, update = updateChipload)
+	spindle_rpm = FloatProperty(name="Spindle RPM", description="Spindle rotation speed", min=100, max=60000, default=12000, update = updateChipload)
 	#movement parallel_step_back 
 	movement_type = EnumProperty(name='Movement type',items=(('CONVENTIONAL','Conventional / Up milling', 'cutter rotates against the direction of the feed'),('CLIMB', 'Climb / Down milling', 'cutter rotates with the direction of the feed'),('MEANDER', 'Meander / Zig Zag' , 'cutting is done both with and against the rotation of the spindle')	 ),description='movement type', default='CLIMB', update = updateRest)
 	spindle_rotation_direction = EnumProperty(name='Spindle rotation', items=(('CW','Clockwise', 'tool bit spins clockwise'),('CCW', 'Counter clockwise', 'tool bit spins counter clock wise')),description='Spindle rotation direction',default='CW', update = updateRest)
@@ -574,7 +574,7 @@ class camOperation(bpy.types.PropertyGroup):
 	merge_dist = FloatProperty(name="Merge distance - EXPERIMENTAL", default=0.0, min=0.0000, max=0.1,precision=PRECISION, unit="LENGTH", update = updateRest)
 	#optimization and performance
 	circle_detail = IntProperty(name="Detail of circles used for curve offsets", default=64, min=12, max=512, update = updateRest)
-	use_exact = BoolProperty(name="Use exact mode",description="Uses Bullet physics engine. Exact mode allows greater precision, but is slower with complex meshes", default=True, update = updateExact)
+	use_exact = BoolProperty(name="Use exact mode",description="Uses Bullet physics engine to sample 3D mesh. Exact mode allows greater precision, but is slower with complex meshes", default=True, update = updateExact)
 	exact_subdivide_edges = BoolProperty(name="Auto subdivide long edges",description="This can avoid some collision issues when importing CAD models", default=False, update = updateExact)
 	use_opencamlib = BoolProperty(name="Use OpenCAMLib",description="Use OpenCAMLib to sample paths or get waterline shape", default=False, update = updateOpencamlib)
 	pixsize = FloatProperty(name="sampling pixel size", description="the physical size of a pixel in the image. The smaller the pixel size is the larger the image will be and processing will be slower", default=0.0001, min=0.00001, max=0.1,precision=PRECISION, unit="LENGTH", update = updateZbufferImage)
