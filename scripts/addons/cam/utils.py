@@ -1043,11 +1043,7 @@ def chunksToMesh(chunks,o):
 			
 		for i,co in enumerate(verts_rotations):#TODO: optimize this. this is just rewritten too many times...
 			#print(r)
-			
 			shapek.data[i].co=co
-			
-
-	
 		
 	printTimeElapsed(t)
 	
@@ -2902,6 +2898,7 @@ def strategy_3d_path_carve( o ):
 	return chunks
 
 def strategy_waterline_ocl( o ):
+	print('operation: waterline using opencamlib')	
 	chunks = []
 	oclGetWaterline(o, chunks)
 	chunks = limitChunks(chunks, o)
@@ -2912,6 +2909,7 @@ def strategy_waterline_ocl( o ):
 	return chunks
 
 def strategy_waterline( o ):
+	print('operation: waterline')	
 	topdown=True
 	tw=time.time()
 	chunks=[]

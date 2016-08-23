@@ -388,10 +388,9 @@ def getMaxCutdepth(self):
 		
 class camOperation(bpy.types.PropertyGroup):
 	
-	name = StringProperty(name="Operation Name", default="Operation", update = updateRest)
-	filename = StringProperty(name="File name", default="Operation", update = updateRest)
-	auto_export = BoolProperty(name="Auto export",description="export files immediately after path calculation", default=True)
-	#group = StringProperty(name='Object group', description='group of objects which will be included in this operation')
+	name = StringProperty(name="Operation Name", description="A unique name for the operation",  default="Operation", update = updateRest)
+	filename = StringProperty(name="File name", description="a unique file name to be used for the exported g-code", default="Operation", update = updateRest)
+	auto_export = BoolProperty(name="Auto export",description="export g-code files immediately after path calculation", default=True)
 	object_name = StringProperty(name='Object', description='object handled by this operation', update=updateOperationValid)
 	group_name = StringProperty(name='Group', description='Object group handled by this operation', update=updateOperationValid)
 	curve_object = StringProperty(name='Curve source', description='curve which will be sampled along the 3d object', update=operationValid)
@@ -415,9 +414,9 @@ class camOperation(bpy.types.PropertyGroup):
 
 	machine_axes = EnumProperty(name='Number of axes',
 		items=(
-			('3', '3 axis', 'a'),
-			('4', '#4 axis - EXPERIMENTAL', 'a'),
-			('5', '#5 axis - EXPERIMENTAL', 'a')),
+			('3', '3 axis', 'x, y, and z axis'),
+			('4', '#4 axis - EXPERIMENTAL', 'x,y,z, and A axis'),
+			('5', '#5 axis - EXPERIMENTAL', 'x,y,z, A and B axis')),
 		description='How many axes will be used for the operation',
 		default='3', update = updateStrategy)
 	strategy = EnumProperty(name='Strategy',
@@ -476,16 +475,16 @@ class camOperation(bpy.types.PropertyGroup):
 	pocket_option = EnumProperty(name='Start Position', items=(('INSIDE', 'Inside', 'path starts at center of pocket area'), ('OUTSIDE', 'Outside', 'path starts at the outside perimeter of the pocket area'), ('MIDDLE', 'Middle', 'path starts in the middle of the pocket area')), description='Pocket starting position', default='MIDDLE', update=updateRest)
 	
 	#Cutout	   
-	cut_type = EnumProperty(name='Cut',items=(('OUTSIDE', 'Outside', 'a'),('INSIDE', 'Inside', 'a'),('ONLINE', 'On line', 'a')),description='Type of cutter used',default='OUTSIDE', update = updateRest)  
+	cut_type = EnumProperty(name='Cut',items=(('OUTSIDE', 'Outside', 'cut on the outside of the curve'),('INSIDE', 'Inside', 'cut on the inside of the curve'),('ONLINE', 'On line', 'cut exactly on the curve')),description='on which side of the curve to cut',default='OUTSIDE', update = updateRest)  
 	#render_all = BoolProperty(name="Use all geometry",description="use also other objects in the scene", default=True)#replaced with groups support
-	outlines_count = IntProperty(name="Outlines count`EXPERIMENTAL",description="Outlines count", default=1,min=1, max=32, update = updateCutout)
+	outlines_count = IntProperty(name="Outlines count`EXPERIMENTAL",description="the number of repeat outline cuts to perform", default=1,min=1, max=32, update = updateCutout)
 	
 	
 	#cutter
 	cutter_id = IntProperty(name="Tool number", description="For machines which support tool change based on tool id", min=0, max=10000, default=1, update = updateRest)
 	cutter_diameter = FloatProperty(name="Cutter diameter", description="Cutter diameter = 2x cutter radius", min=0.000001, max=10, default=0.003, precision=PRECISION, unit="LENGTH", update = updateCutter)
-	cutter_length = FloatProperty(name="Cutter length", description="length of the cutter", min=0.0, max=10.0, default=0.025, precision=PRECISION, unit="LENGTH",  update = updateOffsetImage)
-	cutter_flutes = IntProperty(name="Cutter flutes", description="Cutter flutes", min=1, max=20, default=2, update = updateChipload)
+	cutter_length = FloatProperty(name="Cutter length", description="length of the cutter from tip to end of flute", min=0.0, max=10.0, default=0.025, precision=PRECISION, unit="LENGTH",  update = updateOffsetImage)
+	cutter_flutes = IntProperty(name="Cutter flutes", description="the number of cutter flutes, used for chip load calculation", min=1, max=20, default=2, update = updateChipload)
 	cutter_tip_angle = FloatProperty(name="Cutter v-carve angle", description="Cutter v-carve angle", min=0.0, max=180.0, default=60.0,precision=PRECISION,	 update = updateOffsetImage)
 	cutter_description = StringProperty(name="Tool Description", default="", update = updateOffsetImage)
 	
@@ -583,7 +582,7 @@ class camOperation(bpy.types.PropertyGroup):
 	
 	imgres_limit = IntProperty(name="Maximum resolution in megapixels", default=16, min=1, max=512,description="This property limits total memory usage and prevents crashes. Increase it if you know what are doing.", update = updateZbufferImage)
 	optimize = BoolProperty(name="Reduce path points",description="Optimize the path by reducing the number of points that make up the path", default=True, update = updateRest)
-	optimize_threshold=FloatProperty(name="Reduction threshold in μm", default=.2, min=0.000000001, max=1000,precision=20, update = updateRest)
+	optimize_threshold=FloatProperty(name="Reduction threshold in μm", description="", default=.2, min=0.000000001, max=1000,precision=20, update = updateRest)
 	
 	dont_merge = BoolProperty(name="Dont merge outlines when cutting",description="this is usefull when you want to cut around everything", default=False, update = updateRest)
 	
