@@ -190,7 +190,7 @@ class KillPathsBackground(bpy.types.Operator):
 
 		
 class CalculatePath(bpy.types.Operator):
-	'''calculate CAM paths'''
+	'''calculate CAM paths for selected operation'''
 	bl_idname = "object.calculate_cam_path"
 	bl_label = "Calculate CAM paths"
 	bl_options = {'REGISTER', 'UNDO'}
@@ -221,7 +221,7 @@ class CalculatePath(bpy.types.Operator):
 		return {'FINISHED'}
 
 class PathsAll(bpy.types.Operator):
-	'''calculate all CAM paths'''
+	'''calculate CAM paths for all operations'''
 	bl_idname = "object.calculate_cam_paths_all"
 	bl_label = "Calculate all CAM paths"
 	bl_options = {'REGISTER', 'UNDO'}
@@ -343,8 +343,7 @@ class PathExport(bpy.types.Operator):
 	
 
 class CAMSimulate(bpy.types.Operator):
-	'''simulate CAM operation
-	this is performed by: creating an image, painting Z depth of the brush substractively. Works only for some operations, can not be used for 4-5 axis.'''
+	'''simulate CAM operation.  This is performed by: creating an image, painting Z depth of the brush substractively. Works only for some operations, can not be used for 4-5 axis.'''
 	bl_idname = "object.cam_simulate"
 	bl_label = "CAM simulation"
 	bl_options = {'REGISTER', 'UNDO'}

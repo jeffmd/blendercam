@@ -678,8 +678,8 @@ class opReference(bpy.types.PropertyGroup):#this type is defined just to hold re
 class camChain(bpy.types.PropertyGroup):#chain is just a set of operations which get connected on export into 1 file.
 	index = IntProperty(name="index", description="index in the hard-defined camChains", default=-1)
 	active_operation = IntProperty(name="active operation", description="active operation in chain", default=-1)
-	name = StringProperty(name="Chain Name", default="Chain")
-	filename = StringProperty(name="File name", default="Chain")#filename of 
+	name = StringProperty(name="Chain Name", description="a unique name for the chain", default="Chain")
+	filename = StringProperty(name="File name", description="a unique file name to use when the chain is exported to a file", default="Chain")#filename of 
 	valid = BoolProperty(name="Valid",description="True if whole chain is ok for calculation", default=True);
 	computing = BoolProperty(name="Computing right now",description="", default=False)
 	operations= CollectionProperty(type=opReference)#this is to hold just operation names.
