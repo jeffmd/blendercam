@@ -347,15 +347,12 @@ def updateRest(o,context):
 
 def updateStepover(o, context):
 	newval = o.stepover_perc / 100.0 * o.cutter_diameter
-	print("uso", newval, o.dist_between_paths)
 	if abs(newval - o.dist_between_paths) > 0.000001:
 		o.dist_between_paths  = newval
 		o.changed = True
 
 def updateToolpathDist(o, context):
 	newval = o.dist_between_paths / o.cutter_diameter * 100.0
-	print("utp:", newval, o.stepover_perc)
-	
 	if abs(newval - o.stepover_perc) > 0.000001:
 		o.stepover_perc = newval
 		o.changed = True
