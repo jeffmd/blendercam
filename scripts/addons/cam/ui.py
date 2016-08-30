@@ -464,6 +464,7 @@ class CAM_OPERATION_PROPERTIES_Panel(CAMButtonsPanel, bpy.types.Panel):
 					if use_experimental:
 						layout.prop(ao,'outlines_count')
 						if ao.outlines_count>1:
+							row = layout.row()
 							row.prop(ao,'dist_between_paths')
 							row.prop(ao,'stepover_perc')
 							layout.prop(ao,'movement_insideout')
@@ -472,6 +473,7 @@ class CAM_OPERATION_PROPERTIES_Panel(CAMButtonsPanel, bpy.types.Panel):
 					layout.prop(ao,'slice_detail')	
 					layout.prop(ao,'waterline_fill')  
 					if ao.waterline_fill:
+						row = layout.row()
 						row.prop(ao,'dist_between_paths')			
 						row.prop(ao,'stepover_perc')
 						layout.prop(ao,'waterline_project')
@@ -491,6 +493,7 @@ class CAM_OPERATION_PROPERTIES_Panel(CAMButtonsPanel, bpy.types.Panel):
 					layout.prop(ao,'crazy_threshold2')
 					layout.prop(ao,'crazy_threshold3')
 					layout.prop(ao,'crazy_threshold4')
+					row = layout.row()
 					row.prop(ao,'dist_between_paths')
 					row.prop(ao,'stepover_perc')
 					layout.prop(ao,'dist_along_paths')
@@ -498,9 +501,11 @@ class CAM_OPERATION_PROPERTIES_Panel(CAMButtonsPanel, bpy.types.Panel):
 					layout.prop(ao,'drill_type')
 				elif ao.strategy=='POCKET':
 					layout.prop(ao,'pocket_option')
+					row = layout.row()
 					row.prop(ao,'dist_between_paths')
 					row.prop(ao,'stepover_perc')
-				else:				 
+				else:
+					row = layout.row()
 					row.prop(ao,'dist_between_paths')
 					row.prop(ao,'stepover_perc')
 					layout.prop(ao,'dist_along_paths')
