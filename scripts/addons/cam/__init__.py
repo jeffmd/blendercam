@@ -357,6 +357,22 @@ def updateToolpathDist(o, context):
 		o.stepover_perc = newval
 		o.changed = True
 
+def updatePlungeFeedrateVal(o, context):
+	newval = o.plunge_feedrate_perc * o.feedrate / 100.0
+	if abs(newval - o.plunge_feedrate_val) > 0.000001:
+		o.plunge_feedrate_val = newval
+		o.changed = True
+
+def updatePlungeFeedratePerc(o, context):
+	newval = o.plunge_feedrate_val / o.feedrate * 100.0
+	if abs(newval - o.plunge_feedrate_perc) > 0.000001:
+		o.plunge_feedrate_perc = newval
+		o.changed = True
+		
+def updateFeeds(o, context):
+	updatePlungeFeedrateVal(o, context)
+	updateChipload(o, context)
+
 def updateCutter(o, context):
 	updateStepover(o, context)
 	updateOffsetImage(o, context)
@@ -466,7 +482,7 @@ class camOperation(bpy.types.PropertyGroup):
 		default='Z',
 		update = updateStrategy)
 	
-	skin = FloatProperty(name="Skin", description="Thicknes of material to leave when roughing ", min=0.0, max=1.0, default=0.0,precision=PRECISION, unit="LENGTH", update = updateOffsetImage)
+	skin = FloatProperty(name="Skin", description="Thicknes of material to leave when roughing", min=0.0, max=1.0, default=0.0,precision=PRECISION, unit="LENGTH", update = updateOffsetImage)
 	inverse = BoolProperty(name="Inverse milling",description="Male to female model conversion", default=False, update = updateOffsetImage)
 	array = BoolProperty(name="Use array",description="Create a repetitive array for producing the same thing manytimes", default=False, update = updateRest)
 	array_x_count = IntProperty(name="X count",description="number of times the operation is repeated on the x axis", default=1,min=1, max=32000, update = updateRest)
@@ -563,8 +579,9 @@ class camOperation(bpy.types.PropertyGroup):
 	
 	
 	#feeds
-	feedrate = FloatProperty(name="Feedrate", description="Feedrate", min=0.00005, max=50.0, default=1.0,precision=PRECISION, unit="LENGTH", update = updateChipload)
-	plunge_feedrate = FloatProperty(name="Plunge speed ", description="% of feedrate", min=0.1, max=100.0, default=50.0,precision=1, subtype='PERCENTAGE', update = updateRest)
+	feedrate = FloatProperty(name="Feedrate", description="Feedrate expressed in units/minute", min=0.00005, max=50.0, default=1.0,precision=PRECISION, unit="LENGTH", update = updateFeeds)
+	plunge_feedrate_perc = FloatProperty(name="Plunge % feedrate", description="% of feedrate", min=0.1, max=100.0, default=50.0,precision=1, subtype='PERCENTAGE', update = updatePlungeFeedrateVal)
+	plunge_feedrate_val = FloatProperty(name="Plunge feedrate", description="feedrate to use when tool moves downward", min=0.000001, max=50.0, default=1.0,precision=PRECISION, unit='LENGTH', update = updatePlungeFeedratePerc)
 	plunge_angle =	FloatProperty(name="Plunge angle", description="What angle is allready considered to plunge", default=math.pi/6, min=0, max=math.pi*0.5 , precision=0, subtype="ANGLE" , unit="ROTATION" , update = updateRest)
 	spindle_rpm = FloatProperty(name="Spindle RPM", description="Spindle rotation speed", min=100, max=60000, default=12000, update = updateChipload)
 	#movement parallel_step_back 
@@ -779,7 +796,7 @@ class AddPresetCamOperation(bl_operators.presets.AddPresetBase, Operator):
 		'o.source_image_offset', 'o.circle_detail', 'o.strategy', 'o.update_zbufferimage_tag',
 		'o.stepdown', 'o.feedrate', 'o.cutter_tip_angle', 'o.cutter_id', 'o.path_object_name',
 		'o.pencil_threshold', 'o.geometry_source', 'o.optimize_threshold',
-		'o.protect_vertical', 'o.plunge_feedrate', 'o.minz', 'o.warnings', 'o.object_name',
+		'o.protect_vertical', 'o.plunge_feedrate_perc', 'o.plunge_feedrate_val', 'o.minz', 'o.warnings', 'o.object_name',
 		'o.optimize', 'o.parallel_angle', 'o.cutter_length', 'o.output_header',
 		'o.gcode_header', 'o.output_trailer', 'o.gcode_trailer', 'o.use_modifiers']
 

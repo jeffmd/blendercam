@@ -622,7 +622,9 @@ class CAM_FEEDRATE_Panel(CAMButtonsPanel, bpy.types.Panel):
 			if ao.valid:
 				layout.prop(ao,'feedrate')
 				layout.prop(ao,'do_simulation_feedrate')
-				layout.prop(ao,'plunge_feedrate')
+				row = layout.row()
+				row.prop(ao,'plunge_feedrate_val')
+				row.prop(ao,'plunge_feedrate_perc')
 				layout.prop(ao,'plunge_angle')
 				layout.prop(ao,'spindle_rpm')
 

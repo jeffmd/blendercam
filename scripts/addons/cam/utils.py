@@ -1199,7 +1199,7 @@ def exportGcodePath(filename,vertslist,operations):
 		millfeedrate=min(o.feedrate,m.feedrate_max)
 		
 		millfeedrate=unitcorr*max(millfeedrate,m.feedrate_min)
-		plungefeedrate= millfeedrate*o.plunge_feedrate/100
+		plungefeedrate= millfeedrate*o.plunge_feedrate_perc/100
 		freefeedrate=m.feedrate_max*unitcorr
 		fadjust=False
 		if o.do_simulation_feedrate and mesh.shape_keys!= None and  mesh.shape_keys.key_blocks.find('feedrates')!=-1:
