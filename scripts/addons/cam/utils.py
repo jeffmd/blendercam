@@ -1804,7 +1804,6 @@ def getObjectOutline(radius,o,Offset):#FIXME: make this one operation independen
 	
 	polygons=getOperationSilhouete(o)
 	
-	i=0
 	#print('offseting polygons')
 		
 	if Offset:
@@ -1813,16 +1812,17 @@ def getObjectOutline(radius,o,Offset):#FIXME: make this one operation independen
 		offset=-1
 		
 	outlines=[]
-	i=0
 	#print(polygons, polygons.type)
 	for p1 in polygons:#sort by size before this???
-		print(p1.type,len(polygons))
-		i+=1
+		#print(p1.type,len(polygons))
 		if radius>0:
 			p1 = p1.buffer(radius*offset,resolution = o.circle_detail)
-		outlines.append(p1)
+		# if radius * offset is a large negative then could end up with a polygon inside out
+		# only add valid polygons
+		if p1.is_valid:
+			outlines.append(p1)
 	
-	print(outlines)
+	#print(outlines)
 	if o.dont_merge:
 		outline=sgeometry.MultiPolygon(outlines)
 		#for ci in range(0,len(p)):
@@ -2298,7 +2298,7 @@ def strategy_cutout( o ):
 def strategy_curve( o ):
 	print('operation: curve')
 	pathSamples=[]
-	getOperationSources(o)
+	#getOperationSources(o)
 	if not o.onlycurves:
 		o.warnings+= 'at least one of assigned objects is not a curve\n'
 	#ob=bpy.data.objects[o.object_name]
