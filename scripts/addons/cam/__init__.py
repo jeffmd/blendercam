@@ -603,7 +603,7 @@ class camOperation(bpy.types.PropertyGroup):
 	
 	imgres_limit = IntProperty(name="Maximum resolution in megapixels", default=16, min=1, max=512,description="This property limits total memory usage and prevents crashes. Increase it if you know what are doing.", update = updateZbufferImage)
 	optimize = BoolProperty(name="Reduce path points",description="Optimize the path by reducing the number of points that make up the path", default=True, update = updateRest)
-	optimize_threshold = FloatProperty(name="Reduction threshold length", description="the smallest deviation length between 3 path points before reduction occurs. Smaller values means more path points and improves curve fitting but increases gcode file size", default=0.000002, min=0.0000001, max=1, precision=PRECISION, unit="LENGTH", update = updateRest)
+	optimize_threshold = FloatProperty(name="Reduction threshold", description="the smallest deviation length between 3 path points before reduction occurs. Smaller values means more path points and improves curve fitting but increases gcode file size", default=0.000002, min=0.0000001, max=1, precision=PRECISION, unit="LENGTH", update = updateRest)
 	
 	dont_merge = BoolProperty(name="Dont merge outlines when cutting",description="this is usefull when you want to cut around everything", default=False, update = updateRest)
 	
