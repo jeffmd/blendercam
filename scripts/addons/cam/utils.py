@@ -3092,7 +3092,7 @@ def strategy_waterline( o ):
 		
 		
 		#if bpy.app.debug_value==1:
-		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW') or (o.movement_type=='CLIMB' and o.		spindle_rotation_direction=='CW'):
+		if (o.movement_type=='CONVENTIONAL' and o.spindle_rotation_direction=='CCW') or (o.movement_type=='CLIMB' and o.spindle_rotation_direction=='CW'):
 			for chunk in slicechunks:
 				chunk.points.reverse()
 		slicechunks=sortChunks(slicechunks,o)
