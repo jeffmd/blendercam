@@ -1095,7 +1095,7 @@ def chunksRefineThreshold(chunks,distance, limitdistance):
 				v.normalize()
 				i=1
 				vref=Vector((0,0,0))
-				vhalf = v*d/2
+				#vhalf = v*d/2
 				while vref.length<d/2:
 					
 					vref=v*distance*i
