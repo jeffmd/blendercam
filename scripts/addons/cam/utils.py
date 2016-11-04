@@ -2733,8 +2733,6 @@ def strategy_medial_axis( o ):
 				vertr.append((False, newIdx))
 				if o.cutter_type == 'VCARVE':
 					z = -mpoly_boundary.distance(sgeometry.Point(p)) * slope
-					if z<maxdepth:
-						z = maxdepth
 				elif o.cutter_type == 'BALL' or o.cutter_type == 'BALLNOSE':
 					d = mpoly_boundary.distance(sgeometry.Point(p))
 					r = o.cutter_diameter/2.0
@@ -2745,6 +2743,11 @@ def strategy_medial_axis( o ):
 						z = -r + sqrt(r*r - d*d )
 				else:
 					z = 0
+				# adjust for z starting position other than 0 : user operation depth start
+				z += o.maxz
+				# limit z depth
+				if z<maxdepth:
+					z = maxdepth
 				#print(mpoly.distance(sgeometry.Point(0,0)))
 				#if(z!=0):print(z)
 				filteredPts.append((p[0], p[1], z))
