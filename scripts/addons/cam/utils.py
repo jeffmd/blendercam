@@ -2646,6 +2646,35 @@ def strategy_drill( o ):
 	
 	return chunklayers
 
+
+#tools for voroni graphs all copied from the delaunayVoronoi addon:
+class Point:
+	def __init__(self, x, y, z):
+		self.x, self.y, self.z= x, y, z
+
+def unique(L):
+	"""Return a list of unhashable elements in s, but without duplicates.
+	[[1, 2], [2, 3], [1, 2]] >>> [[1, 2], [2, 3]]"""
+	#For unhashable objects, you can sort the sequence and then scan from the end of the list, deleting duplicates as you go
+	nDupli=0
+	nZcolinear=0
+	L.sort()#sort() brings the equal elements together; then duplicates are easy to weed out in a single pass.
+	last = L[-1]
+	for i in range(len(L)-2, -1, -1):
+		if last[:2] == L[i][:2]:#XY coordinates compararison
+			if last[2] == L[i][2]:#Z coordinates compararison
+				nDupli+=1#duplicates vertices
+			else:#Z colinear
+				nZcolinear+=1
+			del L[i]
+		else:
+			last = L[i]
+	return (nDupli,nZcolinear)#list data type is mutable, input list will automatically update and doesn't need to be returned
+
+def checkEqual(lst):
+	return lst[1:] == lst[:-1]	
+	
+
 def strategy_medial_axis( o ):
 	print('operation: Medial Axis')	
 	print('doing highly experimental stuff')
@@ -2672,17 +2701,8 @@ def strategy_medial_axis( o ):
 		maxdepth = o.minz
 		
 	# use skin setting to adjust maxdepth
-	maxdepth += o.skin 
-		
-	#remember resolutions of curves, to refine them, 
-	#otherwise medial axis computation yields too many branches in curved parts
-	resolutions_before = []
-	for ob in o.objects:
-		if ob.type == 'CURVE' or ob.type == 'FONT':
-			resolutions_before.append(ob.data.resolution_u)
-			if ob.data.resolution_u < 64:
-				ob.data.resolution_u = 64
-				
+	maxdepth += o.skin
+  
 				
 	polys = getOperationSilhouete(o)
 	mpoly = sgeometry.asMultiPolygon(polys)
@@ -2811,13 +2831,6 @@ def strategy_medial_axis( o ):
 		
 		'''
 		#bpy.ops.object.convert(target='CURVE')
-		
-	# restore curve/font object data resolution
-	oi = 0
-	for ob in o.objects:
-		if ob.type == 'CURVE' or ob.type == 'FONT':
-			ob.data.resolution_u = resolutions_before[oi]
-			oi+=1
 		
 	#bpy.ops.object.join()
 	chunks = sortChunks(chunks, o )
@@ -3167,33 +3180,7 @@ def getPath3axis(context, operation):
 		
 	#progress('finished')
 	
-#tools for voroni graphs all copied from the delaunayVoronoi addon:
-class Point:
-	def __init__(self, x, y, z):
-		self.x, self.y, self.z= x, y, z
 
-def unique(L):
-	"""Return a list of unhashable elements in s, but without duplicates.
-	[[1, 2], [2, 3], [1, 2]] >>> [[1, 2], [2, 3]]"""
-	#For unhashable objects, you can sort the sequence and then scan from the end of the list, deleting duplicates as you go
-	nDupli=0
-	nZcolinear=0
-	L.sort()#sort() brings the equal elements together; then duplicates are easy to weed out in a single pass.
-	last = L[-1]
-	for i in range(len(L)-2, -1, -1):
-		if last[:2] == L[i][:2]:#XY coordinates compararison
-			if last[2] == L[i][2]:#Z coordinates compararison
-				nDupli+=1#duplicates vertices
-			else:#Z colinear
-				nZcolinear+=1
-			del L[i]
-		else:
-			last = L[i]
-	return (nDupli,nZcolinear)#list data type is mutable, input list will automatically update and doesn't need to be returned
-
-def checkEqual(lst):
-	return lst[1:] == lst[:-1]	
-	
 def getPath4axis(context,operation):
 	t=time.time()
 	s=bpy.context.scene
