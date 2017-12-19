@@ -2647,11 +2647,6 @@ def strategy_drill( o ):
 	return chunklayers
 
 
-#tools for voroni graphs all copied from the delaunayVoronoi addon:
-class Point:
-	def __init__(self, x, y, z):
-		self.x, self.y, self.z= x, y, z
-
 def unique(L):
 	"""Return a list of unhashable elements in s, but without duplicates.
 	[[1, 2], [2, 3], [1, 2]] >>> [[1, 2], [2, 3]]"""
@@ -2709,14 +2704,13 @@ def strategy_medial_axis( o ):
 	mpoly_boundary = mpoly.boundary
 	for poly in polys:
 		schunks = shapelyToChunks(poly, -1)
-		schunks = chunksRefineThreshold(schunks, o.medial_axis_subdivision, o.medial_axis_threshold)#chunksRefine(schunks,o)
+		schunks = chunksRefineThreshold(schunks, o.medial_axis_subdivision, o.medial_axis_threshold)
 		
 		verts=[]
 		for ch in schunks:		
 			for pt in ch.points:
 				verts.append(pt)
-				
-		#verts= points#[[vert.x, vert.y, vert.z] for vert in vertsPts]
+		
 		nDupli,nZcolinear = unique(verts)
 		nVerts = len(verts)
 		print(str(nDupli)+" duplicates points ignored")
@@ -2725,22 +2719,18 @@ def strategy_medial_axis( o ):
 			self.report({'ERROR'}, "Not enough points")
 			return {'FINISHED'}
 		#Check colinear
+		'''
 		xValues = [pt[0] for pt in verts]
 		yValues = [pt[1] for pt in verts]
 		if checkEqual(xValues) or checkEqual(yValues):
 			self.report({'ERROR'}, "Points are colinear")
 			return {'FINISHED'}
 		#Create diagram
+		'''
 		print("Tesselation... ("+str(nVerts)+" points)")
-		xbuff, ybuff = 5, 5 # %
-		zPosition = 0
-		vertsPts = [Point(vert[0], vert[1], vert[2]) for vert in verts]
-		#vertsPts= [Point(vert[0], vert[1]) for vert in verts]
 		
-		pts, edgesIdx = computeVoronoiDiagram(vertsPts, xbuff, ybuff, polygonsOutput=False, formatOutput=True)
+		pts, edgesIdx = computeVoronoiDiagram(verts, 5, 5, polygonsOutput=False, formatOutput=True)
 		
-		#
-		#pts=[[pt[0], pt[1], zPosition] for pt in pts]
 		newIdx = 0
 		vertr = []
 		filteredPts = []
@@ -2776,12 +2766,8 @@ def strategy_medial_axis( o ):
 		print('filtering edges...')		
 		filteredEdgs = []
 		ledges = []
-		for e in edgesIdx:
-			
+		for e in edgesIdx:	
 			do = True
-			#p1=pts[e[0]]
-			#p2=pts[e[1]]
-			#print(p1,p2,len(vertr))
 			if vertr[e[0]][0]: # exclude edges with allready excluded points
 				do = False
 			elif vertr[e[1]][0]:
@@ -2792,7 +2778,7 @@ def strategy_medial_axis( o ):
 				#print(ledges[-1].has_z)
 		
 			
-		bufpoly = poly.buffer(-o.cutter_diameter/2, resolution = 64)
+		bufpoly = poly.buffer(-o.cutter_diameter/2, resolution = 6)
 
 		lines = shapely.ops.linemerge(ledges)
 		#print(lines.type)

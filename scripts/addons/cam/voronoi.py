@@ -832,14 +832,15 @@ class SiteList(object):
 		self.__sites = []
 		self.__sitenum = 0
 
-		self.__xmin = min([pt.x for pt in pointList])
-		self.__ymin = min([pt.y for pt in pointList])
-		self.__xmax = max([pt.x for pt in pointList])
-		self.__ymax = max([pt.y for pt in pointList])
+		self.__xmin = min([pt[0] for pt in pointList])
+		self.__ymin = min([pt[1] for pt in pointList])
+		self.__xmax = max([pt[0] for pt in pointList])
+		self.__ymax = max([pt[1] for pt in pointList])
 		self.__extent=(self.__xmin, self.__xmax, self.__ymin, self.__ymax)
 
+
 		for i,pt in enumerate(pointList):
-			self.__sites.append(Site(pt.x,pt.y,i))
+			self.__sites.append(Site(pt[0],pt[1],i))
 		self.__sites.sort()
 
 	def setSiteNumber(self,site):
@@ -883,24 +884,24 @@ class SiteList(object):
 def computeVoronoiDiagram(points, xBuff=0, yBuff=0, polygonsOutput=False, formatOutput=False, closePoly=True):
 	"""
 	Takes :
-		- a list of point objects (which must have x and y fields).
+		- a list of point objects .
 		- x and y buffer values which are the expansion percentages of the bounding box rectangle including all input points.
 		Returns :
 		- With default options : 
-		  A list of 2-tuples, representing the two points of each Voronoi diagram edge.
-		  Each point contains 2-tuples which are the x,y coordinates of point.
-		  if formatOutput is True, returns : 
+			A list of 2-tuples, representing the two points of each Voronoi diagram edge.
+			Each point contains 2-tuples which are the x,y coordinates of point.
+			if formatOutput is True, returns : 
 				- a list of 2-tuples, which are the x,y coordinates of the Voronoi diagram vertices.
 				- and a list of 2-tuples (v1, v2) representing edges of the Voronoi diagram.
-				  v1 and v2 are the indices of the vertices at the end of the edge.
+					v1 and v2 are the indices of the vertices at the end of the edge.
 		- If polygonsOutput option is True, returns :
-		  A dictionary of polygons, keys are the indices of the input points,
-		  values contains n-tuples representing the n points of each Voronoi diagram polygon.
-		  Each point contains 2-tuples which are the x,y coordinates of point.
-		  if formatOutput is True, returns : 
+			A dictionary of polygons, keys are the indices of the input points,
+			values contains n-tuples representing the n points of each Voronoi diagram polygon.
+			Each point contains 2-tuples which are the x,y coordinates of point.
+			if formatOutput is True, returns : 
 				- A list of 2-tuples, which are the x,y coordinates of the Voronoi diagram vertices.
 				- and a dictionary of input points indices. Values contains n-tuples representing the n points of each Voronoi diagram polygon.
-				  Each tuple contains the vertex indices of the polygon vertices.
+					Each tuple contains the vertex indices of the polygon vertices.
 		- if closePoly is True then, in the list of points of a polygon, last point will be the same of first point
 	"""
 	siteList = SiteList(points)
