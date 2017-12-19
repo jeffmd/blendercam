@@ -839,9 +839,18 @@ class SiteList(object):
 		self.__extent=(self.__xmin, self.__xmax, self.__ymin, self.__ymax)
 
 
-		for i,pt in enumerate(pointList):
-			self.__sites.append(Site(pt[0],pt[1],i))
-		self.__sites.sort()
+		self.__sites = [Site(pt[0], pt[1], i) for i,pt in enumerate(pointList)]
+		self.unique()
+
+	def unique(self):
+		#For unhashable objects, you can sort the sequence and then scan from the end of the list, deleting duplicates as you go
+		self.__sites.sort() #brings the equal elements together; then duplicates are easy to weed out in a single pass.
+		last = self.__sites[-1]
+		for i in range(len(self.__sites)-2, -1, -1):
+			if last == self.__sites[i]: #XY coordinates compararison
+				del self.__sites[i]
+			else:
+				last = self.__sites[i]
 
 	def setSiteNumber(self,site):
 		site.sitenum = self.__sitenum

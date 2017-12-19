@@ -1895,7 +1895,7 @@ def addMachineAreaObject():
 	s=bpy.context.scene
 	ao=bpy.context.active_object
 	if s.objects.get('CAM_machine')!=None:
-	   o=s.objects['CAM_machine']
+		 o=s.objects['CAM_machine']
 	else:
 		oldunits = s.unit_settings.system
 		# need to be in metric units when adding machine mesh object
@@ -1923,7 +1923,7 @@ def addMachineAreaObject():
 		o.select=False
 		s.unit_settings.system = oldunits
 	#bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-	   
+		 
 	o.dimensions=bpy.context.scene.cam_machine.working_area
 	if ao!=None:
 		activate(ao)
@@ -1940,7 +1940,7 @@ def addMaterialAreaObject():
 	
 	ao=bpy.context.active_object
 	if s.objects.get('CAM_material')!=None:
-	   o=s.objects['CAM_material']
+		 o=s.objects['CAM_material']
 	else:
 		bpy.ops.mesh.primitive_cube_add(view_align=False, enter_editmode=False, location=(1, 1, -1), rotation=(0, 0, 0))
 		o=bpy.context.active_object
@@ -1953,7 +1953,7 @@ def addMaterialAreaObject():
 		o.hide_select = True
 		o.select=False
 	#bpy.ops.wm.redraw_timer(type='DRAW_WIN_SWAP', iterations=1)
-	   
+		 
 	o.dimensions=bpy.context.scene.cam_machine.working_area
 	
 	
@@ -2177,7 +2177,7 @@ def useBridges(ch,o):
 
 def getLayers(operation, startdepth, enddepth):
 	'''returns a list of layers bounded by startdepth and enddepth
-	   uses operation.stepdown to determine number of layers.
+		 uses operation.stepdown to determine number of layers.
 	'''
 	if operation.use_layers:
 		layers = []
@@ -2697,7 +2697,7 @@ def strategy_medial_axis( o ):
 		
 	# use skin setting to adjust maxdepth
 	maxdepth += o.skin
-  
+	
 				
 	polys = getOperationSilhouete(o)
 	mpoly = sgeometry.asMultiPolygon(polys)
@@ -2711,22 +2711,7 @@ def strategy_medial_axis( o ):
 			for pt in ch.points:
 				verts.append(pt)
 		
-		nDupli,nZcolinear = unique(verts)
 		nVerts = len(verts)
-		print(str(nDupli)+" duplicates points ignored")
-		print(str(nZcolinear)+" z colinear points excluded")
-		if nVerts < 3:
-			self.report({'ERROR'}, "Not enough points")
-			return {'FINISHED'}
-		#Check colinear
-		'''
-		xValues = [pt[0] for pt in verts]
-		yValues = [pt[1] for pt in verts]
-		if checkEqual(xValues) or checkEqual(yValues):
-			self.report({'ERROR'}, "Points are colinear")
-			return {'FINISHED'}
-		#Create diagram
-		'''
 		print("Tesselation... ("+str(nVerts)+" points)")
 		
 		pts, edgesIdx = computeVoronoiDiagram(verts, 5, 5, polygonsOutput=False, formatOutput=True)
