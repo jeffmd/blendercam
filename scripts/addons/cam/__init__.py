@@ -389,7 +389,8 @@ def getStrategyList(scene, context):
 			('SPIRAL','Spiral', 'Spiral path'),
 			('CIRCLES','Circles', 'Circles path'),
 			('OUTLINEFILL','Outline Fill', 'Detect outline and fill it with paths as pocket. Then sample these paths on the 3d surface'),
-			('CARVE','Carve', 'Pocket operation')
+			('CARVE','Carve', 'Pocket operation'),
+			('MEDIAL_AXIS','Medial axis - vcarve', 'Medial axis, must be used with V or ball cutter, for engraving various width shapes with a single stroke '),
 			]
 	if use_experimental:
 		items.extend(
@@ -397,7 +398,6 @@ def getStrategyList(scene, context):
 			('CURVE','Curve to Path - EXPERIMENTAL', 'Curve object gets converted directly to path'),
 			('PENCIL','Pencil - EXPERIMENTAL', 'Pencil operation - detects negative corners in the model and mills only those.'),
 			('CRAZY','Crazy path - EXPERIMENTAL', 'Crazy paths - dont even think about using this!'),
-			('MEDIAL_AXIS','Medial axis - EXPERIMENTAL', 'Medial axis, must be used with V or ball cutter, for engraving various width shapes with a single stroke '),
 			('PROJECTED_CURVE','Projected curve - EXPERIMENTAL', 'project 1 curve towards other curve'),
 			('F_ENGRAVE', 'F-Engrave - EXPERIMENTAL', 'engrave or v-carve operation using f-engrave')
 			])
@@ -614,8 +614,6 @@ class camOperation(bpy.types.PropertyGroup):
 	crazy_threshold3 = FloatProperty(name="max angle", default=2, min=0.00000001, max=100,precision=PRECISION, update = updateRest)
 	crazy_threshold4 = FloatProperty(name="test angle step", default=0.05, min=0.00000001, max=100,precision=PRECISION, update = updateRest)
 	####
-	medial_axis_threshold = FloatProperty(name="Long vector length threshold", description="maximum vector length before subdividing, smaller values reduce jagged edges", default=0.001, min=0.00000001, max=100,precision=PRECISION,  unit="LENGTH", update = updateRest)
-	medial_axis_subdivision = FloatProperty(name="Fine subdivision", description="length of each subdivision, smaller values reduce jagged lines but increase calculation time", default=0.0002, min=0.00000001, max=100,precision=PRECISION,  unit="LENGTH", update = updateRest)
 	#calculations
 	duration = FloatProperty(name="Estimated time", default=0.01, min=0.0000, max=3200000000,precision=PRECISION, unit="TIME")
 	max_cutdepth = FloatProperty(name="maximum depth of cut", default=0.01, min=-100.0000, max=100,precision=PRECISION, unit="LENGTH", get=getMaxCutdepth)

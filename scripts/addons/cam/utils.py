@@ -1454,9 +1454,6 @@ def connectChunksLow(chunks,o):
 	if o.strategy=='PENCIL':#this is bigger for pencil path since it goes on the surface to clean up the rests, and can go to close points on the surface without fear of going deep into material.
 		mergedist=10*o.dist_between_paths
 	
-	if o.strategy=='MEDIAL_AXIS':
-		mergedist= 1*o.medial_axis_subdivision
-	
 	if o.parallel_step_back:
 		mergedist*=2
 		
@@ -2305,7 +2302,7 @@ def strategy_curve( o ):
 	for ob in o.objects:
 		pathSamples.extend(curveToChunks(ob))
 	pathSamples=sortChunks(pathSamples,o)#sort before sampling
-	pathSamples=chunksRefine(pathSamples,o)
+	pathSamples=chunksTessalate(pathSamples,o.dist_along_paths)
 	
 	if o.ramp:
 		for ch in pathSamples:
@@ -2704,7 +2701,7 @@ def strategy_medial_axis( o ):
 	mpoly_boundary = mpoly.boundary
 	for poly in polys:
 		schunks = shapelyToChunks(poly, -1)
-		schunks = chunksRefineThreshold(schunks, o.medial_axis_subdivision, o.medial_axis_threshold)
+		schunks = chunksTessalate(schunks, o.dist_along_paths)
 		
 		verts=[]
 		for ch in schunks:
@@ -2830,7 +2827,7 @@ def strategy_3d_path_carve( o ):
 		ob=bpy.data.objects[o.curve_object]
 		pathSamples.extend(curveToChunks(ob))
 		pathSamples=sortChunks(pathSamples,o)#sort before sampling
-		pathSamples=chunksRefine(pathSamples,o)
+		pathSamples=chunksTessalate(pathSamples,o.dist_along_paths)
 		
 	elif o.strategy=='PENCIL':
 		prepareArea(o)
@@ -2852,7 +2849,7 @@ def strategy_3d_path_carve( o ):
 		pathSamples = crazyStrokeImageBinary(o,millarea,avoidarea)
 		#####
 		pathSamples=sortChunks(pathSamples,o)
-		pathSamples=chunksRefine(pathSamples,o)
+		pathSamples=chunksTessalate(pathSamples,o.dist_along_paths)
 		
 	else: 
 		if o.strategy=='OUTLINEFILL':
@@ -3005,7 +3002,7 @@ def strategy_waterline( o ):
 					nchunks=shapelyToChunks(restpoly,fillz)
 					#project paths TODO: path projection during waterline is not working
 					if o.waterline_project:
-						nchunks=chunksRefine(nchunks,o)
+						nchunks=chunksTessalate(nchunks,o.dist_along_paths)
 						nchunks=sampleChunks(o,nchunks,layers)
 						
 					nchunks=limitChunks(nchunks,o, force=True)

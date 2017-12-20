@@ -1039,78 +1039,28 @@ def chunkToShapely(chunk):
 	p=spolygon.Polygon(chunk.points)
 	return p	
 	
-def chunksRefine(chunks,o):
+def chunksTessalate(chunks, distance):
 	'''add extra points in between for chunks'''
-	for ch in chunks:
-		#print('before',len(ch))
-		newchunk=[]
-		v2=Vector(ch.points[0])
-		#print(ch.points)
-		for s in ch.points:
-			
-			v1=Vector(s)
-			#print(v1,v2)
-			v=v1-v2
-			
-			#print(v.length,o.dist_along_paths)
-			if v.length>o.dist_along_paths:
-				d=v.length
-				v.normalize()
-				i=0
-				vref=Vector((0,0,0))
+	if distance > 0:   
+		for ch in chunks:
+			newchunk = []
+			vprev = Vector(ch.points[0])
+			for s in ch.points:
+				vnext = Vector(s)
+				v = vnext - vprev
+				d = v.length
 				
-				while vref.length<d:
-					i+=1
-					vref=v*o.dist_along_paths*i
-					if vref.length<d:
-						p=v2+vref
-						
-						newchunk.append((p.x,p.y,p.z))
-					
-					
-			newchunk.append(s)  
-			v2=v1
-		#print('after',len(newchunk))
-		ch.points=newchunk
-			
-	return chunks
+				if d > distance:
+					v.normalize()
+					i = round(d / distance + 0.5)
+					voff = v * (d / i)
+					while i > 1:
+						vprev += voff
+						newchunk.append((vprev.x, vprev.y, vprev.z))
+						i -= 1
 
-		
-def chunksRefineThreshold(chunks,distance, limitdistance):
-	'''add extra points in between for chunks. For medial axis strategy only !'''
-	for ch in chunks:
-		#print('before',len(ch))
-		newchunk=[]
-		v2=Vector(ch.points[0])
-		#print(ch.points)
-		for s in ch.points:
-			
-			v1=Vector(s)
-			#print(v1,v2)
-			v=v1-v2
-			d=v.length
-			
-			#print(v.length,o.dist_along_paths)
-			if d > limitdistance:
-				d = d/2
-				v.normalize()
-				i = 1
-				doff = distance * i
-				while doff < d:
-					p = v2 + v * doff
-					newchunk.append((p.x, p.y, p.z))
-					i += 1
-					doff = distance * i
-				while i > 0:
-					doff = distance * i
-					if doff < d:
-						p = v1 - (v * doff)
-						newchunk.append((p.x, p.y, p.z))
-					i-=1
-					
-			newchunk.append(s)  
-			v2 = v1
-		#print('after',len(newchunk))
-		ch.points = newchunk
+				newchunk.append(s)  
+				vprev = vnext
+			ch.points = newchunk
 			
 	return chunks
