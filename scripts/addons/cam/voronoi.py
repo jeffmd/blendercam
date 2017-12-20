@@ -219,7 +219,8 @@ class Context(object):
 		pts=[]
 		#get points list
 		for edge in edges:
-			pts.extend([pt for pt in edge])
+			#pts.extend([pt for pt in edge])
+			pts += edge
 		#try to get start & end point
 		try:
 			startPt, endPt = [pt for pt in pts if pts.count(pt)<2]#start and end point aren't duplicate
@@ -936,7 +937,7 @@ def formatEdgesOutput(edges):
 	#get list of points
 	pts=[]
 	for edge in edges:
-		pts.extend(edge)
+		pts += edge
 	#get unique values
 	pts=set(pts)#unique values (tuples are hashable)
 	#get dict {values:index}

@@ -1088,35 +1088,29 @@ def chunksRefineThreshold(chunks,distance, limitdistance):
 			v1=Vector(s)
 			#print(v1,v2)
 			v=v1-v2
+			d=v.length
 			
 			#print(v.length,o.dist_along_paths)
-			if v.length>limitdistance:
-				d=v.length
+			if d > limitdistance:
+				d = d/2
 				v.normalize()
-				i=1
-				vref=Vector((0,0,0))
-				#vhalf = v*d/2
-				while vref.length<d/2:
-					
-					vref=v*distance*i
-					if vref.length<d:
-						p=v2+vref
-						
-						newchunk.append((p.x,p.y,p.z))
-					i+=1
-					vref=v*distance*i#because of the condition, so it doesn't run again.
-				while i>0:
-					vref=v*distance*i
-					if vref.length<d:
-						p=v1-vref
-						
-						newchunk.append((p.x,p.y,p.z))
+				i = 1
+				doff = distance * i
+				while doff < d:
+					p = v2 + v * doff
+					newchunk.append((p.x, p.y, p.z))
+					i += 1
+					doff = distance * i
+				while i > 0:
+					doff = distance * i
+					if doff < d:
+						p = v1 - (v * doff)
+						newchunk.append((p.x, p.y, p.z))
 					i-=1
-					vref=v*distance*i 
 					
 			newchunk.append(s)  
-			v2=v1
+			v2 = v1
 		#print('after',len(newchunk))
-		ch.points=newchunk
+		ch.points = newchunk
 			
 	return chunks

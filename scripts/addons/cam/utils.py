@@ -2707,9 +2707,8 @@ def strategy_medial_axis( o ):
 		schunks = chunksRefineThreshold(schunks, o.medial_axis_subdivision, o.medial_axis_threshold)
 		
 		verts=[]
-		for ch in schunks:		
-			for pt in ch.points:
-				verts.append(pt)
+		for ch in schunks:
+			verts += ch.points
 		
 		nVerts = len(verts)
 		print("Tesselation... ("+str(nVerts)+" points)")
@@ -2721,9 +2720,7 @@ def strategy_medial_axis( o ):
 		filteredPts = []
 		print('filtering points...')
 		for p in pts:
-			if not poly.contains(sgeometry.Point(p)):
-				vertr.append((True, -1))
-			else:
+			if poly.contains(sgeometry.Point(p)):
 				# point is inside the operation silhouete
 				vertr.append((False, newIdx))
 				if o.cutter_type == 'VCARVE':
@@ -2747,9 +2744,11 @@ def strategy_medial_axis( o ):
 				#if(z!=0):print(z)
 				filteredPts.append((p[0], p[1], z))
 				newIdx += 1
+			else:
+				vertr.append((True, -1))
 				
 		print('filtering edges...')		
-		filteredEdgs = []
+		#filteredEdgs = []
 		ledges = []
 		for e in edgesIdx:	
 			do = True
@@ -2758,7 +2757,7 @@ def strategy_medial_axis( o ):
 			elif vertr[e[1]][0]:
 				do = False
 			if do:
-				filteredEdgs.append(((vertr[e[0]][1], vertr[e[1]][1])))
+				#filteredEdgs.append(((vertr[e[0]][1], vertr[e[1]][1])))
 				ledges.append(sgeometry.LineString((filteredPts[vertr[e[0]][1]], filteredPts[vertr[e[1]][1]])))
 				#print(ledges[-1].has_z)
 		
