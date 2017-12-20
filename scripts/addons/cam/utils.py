@@ -2697,9 +2697,8 @@ def strategy_medial_axis( o ):
 	
 				
 	polys = getOperationSilhouete(o)
-	mpoly = sgeometry.asMultiPolygon(polys)
-	mpoly_boundary = mpoly.boundary
 	for poly in polys:
+		poly_boundary = poly.boundary
 		schunks = shapelyToChunks(poly, -1)
 		schunks = chunksTessalate(schunks, o.dist_along_paths)
 		
@@ -2721,9 +2720,9 @@ def strategy_medial_axis( o ):
 				# point is inside the operation silhouete
 				vertr.append((False, newIdx))
 				if o.cutter_type == 'VCARVE':
-					z = -mpoly_boundary.distance(sgeometry.Point(p)) * slope
+					z = -poly_boundary.distance(sgeometry.Point(p)) * slope
 				elif o.cutter_type == 'BALL' or o.cutter_type == 'BALLNOSE':
-					d = mpoly_boundary.distance(sgeometry.Point(p))
+					d = poly_boundary.distance(sgeometry.Point(p))
 					r = o.cutter_diameter/2.0
 					if d>=r:
 						z = -r
