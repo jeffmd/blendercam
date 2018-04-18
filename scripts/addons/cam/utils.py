@@ -2684,7 +2684,6 @@ def checkEqual(lst):
 
 def strategy_medial_axis( o ):
 	print('operation: Medial Axis')	
-	print('doing highly experimental stuff')
 	
 	from cam.voronoi import Site, computeVoronoiDiagram
 	
@@ -2724,7 +2723,7 @@ def strategy_medial_axis( o ):
 		nVerts = len(verts)
 		print("Tesselation... ("+str(nVerts)+" points)")
 		
-		pts, edgesIdx = computeVoronoiDiagram(verts, 5, 5, polygonsOutput=False, formatOutput=True)
+		pts, edgesIdx = computeVoronoiDiagram(verts, 1, 1, polygonsOutput=False, formatOutput=True)
 		
 		newIdx = 0
 		vertr = []
